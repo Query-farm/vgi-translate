@@ -1,0 +1,71 @@
+# name: test/sql/translate_all.test
+# description: translate_all table-in-out — id passthrough, (id, text, translation, src_lang)
+# group: [vgi_translate]
+#
+# Performs a real en->es translation; needs the Argos en->es package (see the
+# Makefile `test-sql` target, which pre-installs it).
+
+require-env VGI_TRANSLATE_WORKER
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'translate' AS tr (TYPE vgi, LOCATION '${VGI_TRANSLATE_WORKER}');
+
+statement ok
+CREATE TEMP VIEW messages AS
+  SELECT * FROM (VALUES
+      (1, 'Hello, world.'),
+      (2, 'Hello, world.')
+  ) AS t(id, body);
+
+# ============================================================================
+# Output schema is exactly (id, text, translation, src_lang)
+# ============================================================================
+
+query I
+SELECT count(*) FROM (DESCRIBE
+  SELECT * FROM tr.translate_all((SELECT id, body FROM messages),
+                                 id := 'id', target := 'es', source := 'en'));
+----
+4
+
+query I
+SELECT column_name FROM (DESCRIBE
+  SELECT * FROM tr.translate_all((SELECT id, body FROM messages),
+                                 id := 'id', target := 'es', source := 'en'));
+----
+id
+text
+translation
+src_lang
+
+# ============================================================================
+# Row contents: id passthrough, original text, translation, source language.
+# ORDER BY id for determinism.
+# ============================================================================
+
+query IITT
+SELECT id, text, translation, src_lang
+FROM tr.translate_all((SELECT id, body FROM messages),
+                      id := 'id', target := 'es', source := 'en')
+ORDER BY id;
+----
+1	Hello, world.	Hola, mundo.	en
+2	Hello, world.	Hola, mundo.	en
+
+# ---- source := 'auto' detects the source language per row ----
+# Assert the detected source and that the text actually changed; the exact
+# Spanish wording varies by Argos model version, so we don't pin it.
+query ITT
+SELECT id, src_lang, translation <> text AS changed
+FROM tr.translate_all(
+       (SELECT 1 AS id, 'The weather is nice today and I am going for a walk.' AS body),
+       id := 'id', target := 'es', source := 'auto')
+ORDER BY id;
+----
+1	en	true
+
+statement ok
+DETACH tr;

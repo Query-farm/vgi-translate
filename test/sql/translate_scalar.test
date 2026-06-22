@@ -1,0 +1,66 @@
+# name: test/sql/translate_scalar.test
+# description: translate() scalar — both arity overloads (explicit source + auto-detect)
+# group: [vgi_translate]
+#
+# This file performs a real en->es translation, so it needs the Argos en->es
+# package installed. The Makefile `test-sql` target pre-installs it; the worker
+# also installs it lazily on first call when network is available.
+
+require-env VGI_TRANSLATE_WORKER
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'translate' AS tr (TYPE vgi, LOCATION '${VGI_TRANSLATE_WORKER}');
+
+# ============================================================================
+# translate(text, to_lang, from_lang) — explicit source language overload
+# ============================================================================
+
+query I
+SELECT tr.translate('Hello, world.', 'es', 'en');
+----
+Hola, mundo.
+
+# ============================================================================
+# translate(text, to_lang) — source auto-detected overload
+# ============================================================================
+#
+# Use a full English sentence so detection is unambiguous: py3langid is
+# unreliable on very short strings (it misreads "Hello, world." as Dutch), but
+# a real sentence is detected as 'en' and translated. We assert the source was
+# detected as English and that the output changed (the exact wording varies by
+# Argos model version, so we don't pin it).
+
+query I
+SELECT tr.detect_lang('The weather is nice today and I am going for a walk.');
+----
+en
+
+query T
+SELECT tr.translate('The weather is nice today and I am going for a walk.', 'es')
+       <> 'The weather is nice today and I am going for a walk.';
+----
+true
+
+# Empty / whitespace-only input passes through unchanged (nothing to translate).
+query I
+SELECT tr.translate('', 'es', 'en');
+----
+(empty)
+
+# NULL passes through as NULL.
+query I
+SELECT tr.translate(NULL, 'es', 'en');
+----
+NULL
+
+# Source == target is a no-op passthrough.
+query I
+SELECT tr.translate('Hello, world.', 'en', 'en');
+----
+Hello, world.
+
+statement ok
+DETACH tr;

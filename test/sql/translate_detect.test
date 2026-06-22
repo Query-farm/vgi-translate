@@ -1,0 +1,65 @@
+# name: test/sql/translate_detect.test
+# description: Language detection over a table — runs fully offline (no model download)
+# group: [vgi_translate]
+
+require-env VGI_TRANSLATE_WORKER
+
+# Under haybarn-unittest, `require vgi` SKIPS the file; load the extension
+# explicitly instead so these tests actually run.
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'translate' AS tr (TYPE vgi, LOCATION '${VGI_TRANSLATE_WORKER}');
+
+# ============================================================================
+# Catalog discovery
+# ============================================================================
+
+query II
+SELECT catalog_name, schema_name FROM information_schema.schemata WHERE catalog_name = 'tr';
+----
+tr	main
+
+# ============================================================================
+# detect_lang scalar — bundled offline identification model
+# ============================================================================
+
+query I
+SELECT tr.detect_lang('Hello, how are you doing today my friend?');
+----
+en
+
+# Empty / whitespace-only input is undetermined.
+query I
+SELECT tr.detect_lang('');
+----
+und
+
+query I
+SELECT tr.detect_lang('   ');
+----
+und
+
+# NULL passes through as NULL.
+query I
+SELECT tr.detect_lang(NULL);
+----
+NULL
+
+# ---- detect_lang over a VALUES table, with deterministic ordering ----
+query II
+SELECT id, tr.detect_lang(body) AS lang
+FROM (VALUES
+    (1, 'Hello, how are you doing today my friend?'),
+    (2, 'Hola, ¿cómo estás hoy? Espero que todo vaya muy bien.'),
+    (3, 'Bonjour, comment allez-vous aujourd''hui mon ami?')
+) AS t(id, body)
+ORDER BY id;
+----
+1	en
+2	es
+3	fr
+
+statement ok
+DETACH tr;

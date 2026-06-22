@@ -12,7 +12,7 @@ ATTACH 'tr' (TYPE vgi, LOCATION 'uv run translate_worker.py');
 SELECT tr.translate('Hello, world.', 'es');          -- 'Hola, mundo.'
 SELECT tr.detect_lang('Bonjour le monde');           -- 'fr'
 SELECT * FROM tr.translate_all(
-  (SELECT id, body FROM messages), id := 'id', to := 'es', from := 'auto');
+  (SELECT id, body FROM messages), id := 'id', target := 'es', source := 'auto');
 ```
 
 The first time you translate a given language pair, the worker downloads a small,
@@ -59,7 +59,7 @@ The worker code itself is under the
 | --- | --- | --- |
 | **Translate one value/column** | `tr.translate(text, 'es')` | scalar function |
 | **Detect a language** | `tr.detect_lang(text)` | scalar function |
-| **Translate a whole table (batched)** | `tr.translate_all((SELECT id, text), id := 'id', to := 'es')` | table-in-out function |
+| **Translate a whole table (batched)** | `tr.translate_all((SELECT id, text), id := 'id', target := 'es')` | table-in-out function |
 
 **Conventions:**
 
@@ -69,7 +69,7 @@ The worker code itself is under the
   row of a batch) reuse the loaded model.
 - Language codes are **ISO 639-1** (`en`, `es`, `fr`, `de`, …). Region/script
   suffixes are stripped (`pt-BR` → `pt`).
-- `from := 'auto'` (the default) **detects the source language** per row.
+- `source := 'auto'` (the default) **detects the source language** per row.
 - When the source already equals the target, or input is empty/undetectable, the
   text is returned **unchanged**.
 - If a language pair can't be installed offline (and isn't cached), you get a
@@ -101,7 +101,7 @@ returns `'und'` (undetermined). Runs fully offline.
 SELECT detect_lang(body) AS lang, count(*) FROM messages GROUP BY lang;
 ```
 
-### `translate_all((SELECT id, text), id := 'id', to := 'es', from := 'auto')` → `(id, text, translation, src_lang)`  *(table-in-out)*
+### `translate_all((SELECT id, text), id := 'id', target := 'es', source := 'auto')` → `(id, text, translation, src_lang)`  *(table-in-out)*
 
 Batched translation of a streamed table, with an **`id` passthrough column**.
 This is the throughput path: it processes whole record batches and reuses the
@@ -110,19 +110,20 @@ per-process model cache, so a single model load serves the entire scan.
 - `id` — a passthrough column: excluded from translation and copied unchanged
   onto each output row, so you can join the result back to the source. Optional.
 - The single remaining (non-`id`) column is the text to translate.
-- `to` — target language (required). `from` — source language or `'auto'`
-  (default).
+- `target` — target language (required). `source` — source language or `'auto'`
+  (default). (Named `target`/`source` rather than `to`/`from`, which are SQL
+  reserved keywords.)
 - Output columns: `id` (if given), `text` (original), `translation`, `src_lang`
-  (the source language actually used; the detected code when `from := 'auto'`).
+  (the source language actually used; the detected code when `source := 'auto'`).
 
 ```sql
 SELECT * FROM tr.translate_all(
-  (SELECT id, body FROM messages), id := 'id', to := 'es', from := 'auto');
+  (SELECT id, body FROM messages), id := 'id', target := 'es', source := 'auto');
 
 -- join translations back onto the source rows
 SELECT m.*, t.translation, t.src_lang
 FROM messages m
-JOIN tr.translate_all((SELECT id, body FROM messages), id := 'id', to := 'en') t
+JOIN tr.translate_all((SELECT id, body FROM messages), id := 'id', target := 'en') t
   USING (id);
 ```
 
@@ -157,16 +158,27 @@ which you can do in two steps if a direct package doesn't exist.
 
 ```sh
 uv sync                       # install vgi-python, argostranslate, py3langid
-uv run pytest -q              # full suite (a real en→es download test self-skips offline)
-uv run pytest -m "not download"   # offline-only: backend + detect_lang, no downloads
+make test                     # unit (pytest) + end-to-end SQL (haybarn-unittest)
+make test-unit                # full pytest suite (real en→es download test self-skips offline)
+make test-offline             # offline-only: backend + detect_lang, no downloads
+make test-sql                 # DuckDB sqllogictest E2E (installs the runner + en→es package)
 uv run ruff check . && uv run ruff format --check .
 ```
 
-Tests drive the **real worker subprocess** through `vgi.client.Client`, exactly
-as DuckDB does. The heavy translation tests are marked `download`: they install
-the Argos `en→es` package and **self-skip** when it can't be installed (no
-network and not cached), so the suite stays green offline. `detect_lang` and the
-backend unit tests always run — they need no downloads.
+**Unit tests** drive the **real worker subprocess** through `vgi.client.Client`,
+exactly as DuckDB does. The heavy translation tests are marked `download`: they
+install the Argos `en→es` package and **self-skip** when it can't be installed
+(no network and not cached), so the suite stays green offline. `detect_lang`,
+the backend unit tests, and the offline edge-case tests (empty/NULL/whitespace,
+source==target, missing target) always run — they need no downloads.
+
+**End-to-end SQL tests** (`test/sql/*.test`) run the worker under DuckDB through
+the [`haybarn-unittest`](https://pypi.org/project/haybarn-unittest/)
+sqllogictest runner (`uv tool install haybarn-unittest`). `make test-sql`
+installs the runner and the Argos `en→es` package, then exercises `detect_lang`,
+both `translate` overloads, `translate_all` (id passthrough + `src_lang`), and
+clear-error cases for unknown language codes — against the actual SQL surface.
+The `detect_lang` E2E case needs no download and always runs.
 
 > Developing against a local `vgi-python` checkout? Uncomment `[tool.uv.sources]`
 > in `pyproject.toml`, or `uv pip install -e ../vgi-python`.
@@ -181,6 +193,14 @@ vgi_translate/
   tables.py              translate_all batched table-in-out (id passthrough)
   schema_utils.py        Arrow column-comment helper
 tests/
-  test_backend.py        offline unit tests (normalize, detect, backend selection)
+  test_backend.py        offline unit tests (normalize, detect, backend selection, edge cases)
   test_translate.py      Client integration tests (detect_lang offline; translate gated on download)
+test/sql/
+  translate_detect.test  detect_lang E2E over a VALUES table (offline, always runs)
+  translate_scalar.test  translate() E2E — both overloads, empty/NULL/no-op edges
+  translate_all.test     translate_all E2E — id passthrough + (text, translation, src_lang)
+  translate_errors.test  unknown / missing language codes -> clear SQL errors
+scripts/
+  ensure_argos_pair.py   idempotently installs an Argos language pair (used by `make test-sql`)
+Makefile                 test / test-unit / test-offline / test-sql / lint
 ```

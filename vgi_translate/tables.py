@@ -7,7 +7,7 @@ a single Argos package load serves the entire scan.
 
     SELECT * FROM translate.translate_all(
         (SELECT id, body FROM messages),
-        id := 'id', to := 'es', from := 'auto');
+        id := 'id', target := 'es', source := 'auto');
 
 Column roles
 ------------
@@ -15,8 +15,9 @@ Column roles
   unchanged onto each output row so you can join the result back to the source.
 * the remaining (single) text column is translated.
 
-Named arguments (``id :=``, ``to :=``, ``from :=``) use DuckDB's ``name := value``
-syntax, which table functions support.
+Named arguments (``id :=``, ``target :=``, ``source :=``) use DuckDB's
+``name := value`` syntax, which table functions support. (``target`` / ``source``
+rather than ``to`` / ``from`` because the latter are SQL reserved keywords.)
 """
 
 from __future__ import annotations
@@ -37,11 +38,17 @@ from .schema_utils import field
 
 @dataclass(slots=True, frozen=True)
 class TranslateAllArgs:
+    # NOTE on argument names: DuckDB exposes each named argument under its
+    # *field name* and looks the supplied value up by the same name, so the
+    # field name and the ``Arg(...)`` alias MUST match. ``to`` / ``from`` would
+    # be ideal but are SQL reserved keywords (and ``from`` is a Python keyword,
+    # so it can only be the field ``from_`` — a name DuckDB then can't route a
+    # value to). We therefore use the non-reserved ``target`` / ``source``.
     data: Annotated[TableInput, Arg(0, doc="Table to translate (an id column + one text column).")]
-    to: Annotated[str, Arg("to", default="", doc="Target language code, e.g. 'es' (ISO 639-1). Required.")]
-    from_: Annotated[
+    target: Annotated[str, Arg("target", default="", doc="Target language code, e.g. 'es' (ISO 639-1). Required.")]
+    source: Annotated[
         str,
-        Arg("from", default=AUTO, doc="Source language code, or 'auto' to detect per row (default 'auto')."),
+        Arg("source", default=AUTO, doc="Source language code, or 'auto' to detect per row (default 'auto')."),
     ]
     id: Annotated[str, Arg("id", default="", doc="Name of an id column to carry through (excluded from translation).")]
 
@@ -75,7 +82,7 @@ class TranslateAll(TableInOutGenerator[TranslateAllArgs]):
             FunctionExample(
                 sql=(
                     "SELECT * FROM translate.translate_all("
-                    "(SELECT id, body FROM messages), id := 'id', to := 'es', from := 'auto')"
+                    "(SELECT id, body FROM messages), id := 'id', target := 'es', source := 'auto')"
                 ),
                 description="Translate a messages table to Spanish, detecting the source language",
             )
@@ -87,8 +94,8 @@ class TranslateAll(TableInOutGenerator[TranslateAllArgs]):
         input_schema = params.bind_call.input_schema
         assert input_schema is not None
 
-        if not normalize_lang(a.to):
-            raise ValueError("translate_all requires 'to' (the target language), e.g. to := 'es'")
+        if not normalize_lang(a.target):
+            raise ValueError("translate_all requires 'target' (the target language), e.g. target := 'es'")
         if a.id and a.id not in input_schema.names:
             raise ValueError(f"id column {a.id!r} not found in input; columns: {', '.join(input_schema.names)}")
         # Validate that exactly one text column is present (raises otherwise).
@@ -103,7 +110,7 @@ class TranslateAll(TableInOutGenerator[TranslateAllArgs]):
             field(
                 "src_lang",
                 pa.string(),
-                "Source language used (detected when from := 'auto').",
+                "Source language used (detected when source := 'auto').",
                 nullable=True,
             )
         )
@@ -119,7 +126,7 @@ class TranslateAll(TableInOutGenerator[TranslateAllArgs]):
     ) -> None:
         a = params.args
         backend = get_backend()
-        to_code = normalize_lang(a.to)
+        to_code = normalize_lang(a.target)
 
         text_col = _text_column(batch.schema, a.id)
         texts = batch.column(text_col).to_pylist()
@@ -131,7 +138,7 @@ class TranslateAll(TableInOutGenerator[TranslateAllArgs]):
                 translations.append(None)
                 src_langs.append(None)
                 continue
-            src = backend.resolve_source(value, a.from_)
+            src = backend.resolve_source(value, a.source)
             translations.append(backend.translate(value, to_code=to_code, from_code=src))
             src_langs.append(src)
 

@@ -46,26 +46,39 @@ def _en_es_installable() -> bool:
         return False
 
 
+def _detect(client: Client, texts: list[str | None]) -> list[str | None]:
+    batch = pa.RecordBatch.from_pydict({"text": texts})
+    results = list(
+        client.scalar_function(
+            function_name="detect_lang",
+            input=iter([batch]),
+            arguments=Arguments(positional=[pa.scalar("text")]),
+        )
+    )
+    return results[0]["result"].to_pylist()
+
+
 class TestDetectLang:
     def test_detects_languages(self) -> None:
-        batch = pa.RecordBatch.from_pydict(
-            {
-                "text": [
+        with _client() as client:
+            assert _detect(
+                client,
+                [
                     "Hello, how are you doing today my friend?",
                     "Hola, ¿cómo estás hoy? Espero que todo vaya muy bien.",
                     "Bonjour, comment allez-vous aujourd'hui mon ami?",
-                ]
-            }
-        )
+                ],
+            ) == ["en", "es", "fr"]
+
+    def test_empty_whitespace_and_null(self) -> None:
+        # Empty / whitespace-only -> 'und'; NULL passes through as None.
         with _client() as client:
-            results = list(
-                client.scalar_function(
-                    function_name="detect_lang",
-                    input=iter([batch]),
-                    arguments=Arguments(positional=[pa.scalar("text")]),
-                )
-            )
-        assert results[0]["result"].to_pylist() == ["en", "es", "fr"]
+            assert _detect(client, ["", "   ", "\t\n", None]) == ["und", "und", "und", None]
+
+    def test_very_long_text(self) -> None:
+        long_text = ("The quick brown fox jumps over the lazy dog. " * 200).strip()
+        with _client() as client:
+            assert _detect(client, [long_text]) == ["en"]
 
 
 @pytest.mark.download
@@ -109,6 +122,44 @@ class TestTranslateScalar:
         assert out and out != "The weather is nice today and I am going for a walk."
 
 
+def _translate(client: Client, texts: list[str | None], *, positional: list[object]) -> list[str | None]:
+    batch = pa.RecordBatch.from_pydict({"text": texts})
+    results = list(
+        client.scalar_function(
+            function_name="translate",
+            input=iter([batch]),
+            arguments=Arguments(positional=[pa.scalar(p) for p in positional]),
+        )
+    )
+    return results[0]["result"].to_pylist()
+
+
+class TestTranslateScalarEdgeCases:
+    """Edge cases that short-circuit before any model download (run offline)."""
+
+    def test_empty_whitespace_and_null_pass_through(self) -> None:
+        # Empty / whitespace pass through unchanged; NULL stays NULL. No package
+        # download is triggered, so this runs without the `download` marker.
+        with _client() as client:
+            assert _translate(client, ["", "   ", None], positional=["es", "en"]) == ["", "   ", None]
+
+    def test_source_equals_target_is_noop(self) -> None:
+        with _client() as client:
+            assert _translate(client, ["Hello, world."], positional=["en", "en"]) == ["Hello, world."]
+
+
+@pytest.mark.download
+class TestTranslateScalarErrors:
+    def test_unknown_target_language_errors(self) -> None:
+        # An unknown target code surfaces a clear worker error (needs the Argos
+        # package index to confirm the pair is unavailable).
+        import pytest as _pytest
+
+        with _client() as client:
+            with _pytest.raises(Exception, match="no Argos translation available|could not install"):
+                _translate(client, ["Hello, world."], positional=["zz", "en"])
+
+
 @pytest.mark.download
 class TestTranslateAll:
     def test_table_in_out_with_id_passthrough(self) -> None:
@@ -124,7 +175,7 @@ class TestTranslateAll:
                     # The table input is the streamed `input`; only named args
                     # go in `arguments`.
                     arguments=Arguments(
-                        named={"id": pa.scalar("id"), "to": pa.scalar("es"), "from": pa.scalar("en")},
+                        named={"id": pa.scalar("id"), "target": pa.scalar("es"), "source": pa.scalar("en")},
                     ),
                 )
             )

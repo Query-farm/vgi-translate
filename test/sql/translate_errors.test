@@ -1,0 +1,30 @@
+# name: test/sql/translate_errors.test
+# description: Unknown / unsupported language codes surface clear errors (not opaque ones)
+# group: [vgi_translate]
+#
+# Resolving an unknown pair updates the Argos package index, so this needs
+# network (or a warm cache). It runs alongside the real-translation tests.
+
+require-env VGI_TRANSLATE_WORKER
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'translate' AS tr (TYPE vgi, LOCATION '${VGI_TRANSLATE_WORKER}');
+
+# ---- unknown / unsupported target language code -> clear error ----
+statement error
+SELECT tr.translate('Hello, world.', 'zz', 'en');
+----
+no Argos translation available
+
+# ---- missing target language via translate_all -> clear error ----
+statement error
+SELECT * FROM tr.translate_all((SELECT 1 AS id, 'Hello, world.' AS body),
+                               id := 'id', target := '', source := 'en');
+----
+requires 'target'
+
+statement ok
+DETACH tr;

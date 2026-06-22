@@ -20,7 +20,7 @@ Usage:
     SELECT tr.translate('Hello, world.', 'es');
     SELECT tr.detect_lang('Bonjour le monde');
     SELECT * FROM tr.translate_all((SELECT id, body FROM messages),
-                                   id := 'id', to := 'es', from := 'auto');
+                                   id := 'id', target := 'es', source := 'auto');
 
 Default backend: **Argos Translate** (MIT), which downloads permissively-
 licensed OPUS-MT language packages on demand. See README.md for the licensing
