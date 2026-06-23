@@ -1761,7 +1761,7 @@ requires-dist = [
     { name = "py3langid", specifier = ">=0.3" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6" },
-    { name = "vgi-python" },
+    { name = "vgi-python", specifier = ">=0.8.3" },
 ]
 provides-extras = ["dev"]
 
