@@ -1,3 +1,9 @@
+<p align="center">
+  <img src="docs/vgi-logo.png" alt="Vector Gateway Interface (VGI)" width="320">
+</p>
+
+<p align="center"><em>A <a href="https://query.farm">Query.Farm</a> VGI worker for DuckDB.</em></p>
+
 # vgi-translate
 
 A [VGI](https://github.com/query-farm/vgi-python) worker that brings **local
@@ -204,3 +210,12 @@ scripts/
   ensure_argos_pair.py   idempotently installs an Argos language pair (used by `make test-sql`)
 Makefile                 test / test-unit / test-offline / test-sql / lint
 ```
+
+---
+
+## Authorship & License
+
+Written by [Query.Farm](https://query.farm) — every VGI worker is designed and built by Query.Farm.
+
+Copyright 2026 Query Farm LLC - https://query.farm
+
