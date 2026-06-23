@@ -29,6 +29,7 @@ import os
 import threading
 from abc import ABC, abstractmethod
 from functools import lru_cache
+from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ def normalize_lang(code: str) -> str:
 
 
 @lru_cache(maxsize=1)
-def _langid_identifier():
+def _langid_identifier() -> Any:
     """Build and cache the py3langid identifier once per process."""
     try:
         from py3langid.langid import MODEL_FILE, LanguageIdentifier
@@ -129,6 +130,7 @@ class ArgosBackend(Backend):
     """Argos Translate backend (MIT). Lazily installs + caches OPUS-MT packages."""
 
     def __init__(self) -> None:
+        """Initialize the install lock and the per-process package cache."""
         # Guards lazy package installation: argostranslate's package index and
         # install are not safe to run concurrently, and a pooled worker may see
         # overlapping calls.
@@ -179,6 +181,7 @@ class ArgosBackend(Backend):
             self._installed.add(key)
 
     def translate(self, text: str, *, to_code: str, from_code: str) -> str:
+        """Translate ``text`` into ``to_code``, installing the package on demand."""
         import argostranslate.translate as translate
 
         if text is None:
@@ -192,7 +195,8 @@ class ArgosBackend(Backend):
             return text
         self._ensure_pair(src, to_code)
         try:
-            return translate.translate(text, src, to_code)
+            result: str = translate.translate(text, src, to_code)
+            return result
         except Exception as exc:
             raise TranslationError(f"translation '{src}->{to_code}' failed: {exc}") from exc
 

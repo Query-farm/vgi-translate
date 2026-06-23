@@ -68,6 +68,12 @@ jobs:
       - name: Check linting
         run: uv run ruff check .
 
+      - name: Type check (mypy)
+        run: uv run mypy vgi_translate translate_worker.py
+
+      - name: Docstring lint (pydoclint)
+        run: uv run pydoclint vgi_translate translate_worker.py
+
   # Resolve the latest published haybarn release once, so the whole matrix tests
   # the same version (and we never hardcode/pin it).
   resolve-haybarn:

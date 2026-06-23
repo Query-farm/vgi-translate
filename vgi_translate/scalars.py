@@ -59,6 +59,8 @@ class TranslateAuto(ScalarFunction):
     """``translate(text, to_lang)`` — translate, auto-detecting the source language."""
 
     class Meta:
+        """Function metadata."""
+
         name = "translate"
         description = "Translate text into a target language (source auto-detected) using a local neural model"
         categories = ["translation", "nlp"]
@@ -75,6 +77,7 @@ class TranslateAuto(ScalarFunction):
         text: Annotated[pa.StringArray, Param(doc="Text to translate.")],
         to_lang: Annotated[str, ConstParam("Target language code, e.g. 'es' (ISO 639-1).")],
     ) -> Annotated[pa.StringArray, Returns()]:
+        """Map each input row to its output value."""
         return _translate_column(text, to_code=to_lang, from_code="auto")
 
 
@@ -87,6 +90,8 @@ class Translate(ScalarFunction):
     """
 
     class Meta:
+        """Function metadata."""
+
         name = "translate"
         description = "Translate text from an explicit source language into a target language (local neural model)"
         categories = ["translation", "nlp"]
@@ -104,6 +109,7 @@ class Translate(ScalarFunction):
         to_lang: Annotated[str, ConstParam("Target language code, e.g. 'es' (ISO 639-1).")],
         from_lang: Annotated[str, ConstParam("Source language code, or 'auto' to detect.")],
     ) -> Annotated[pa.StringArray, Returns()]:
+        """Map each input row to its output value."""
         return _translate_column(text, to_code=to_lang, from_code=from_lang)
 
 
@@ -115,6 +121,8 @@ class DetectLang(ScalarFunction):
     """
 
     class Meta:
+        """Function metadata."""
+
         name = "detect_lang"
         description = "Detect the ISO 639-1 language code of text"
         categories = ["translation", "nlp"]
@@ -134,6 +142,7 @@ class DetectLang(ScalarFunction):
         cls,
         text: Annotated[pa.StringArray, Param(doc="Text whose language to detect.")],
     ) -> Annotated[pa.StringArray, Returns()]:
+        """Map each input row to its output value."""
         out = [None if v is None else detect_language(v) for v in text.to_pylist()]
         return pa.array(out, type=pa.string())
 

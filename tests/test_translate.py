@@ -155,9 +155,11 @@ class TestTranslateScalarErrors:
         # package index to confirm the pair is unavailable).
         import pytest as _pytest
 
-        with _client() as client:
-            with _pytest.raises(Exception, match="no Argos translation available|could not install"):
-                _translate(client, ["Hello, world."], positional=["zz", "en"])
+        with (
+            _client() as client,
+            _pytest.raises(Exception, match="no Argos translation available|could not install"),
+        ):
+            _translate(client, ["Hello, world."], positional=["zz", "en"])
 
 
 @pytest.mark.download

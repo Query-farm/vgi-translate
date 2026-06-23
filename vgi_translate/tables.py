@@ -30,7 +30,8 @@ from vgi.arguments import Arg, TableInput
 from vgi.invocation import BindResponse
 from vgi.metadata import FunctionExample
 from vgi.table_function import BindParams, ProcessParams
-from vgi.table_in_out_function import OutputCollector, TableInOutGenerator
+from vgi.table_in_out_function import TableInOutGenerator
+from vgi_rpc.rpc import OutputCollector
 
 from .backend import AUTO, get_backend, normalize_lang
 from .schema_utils import field
@@ -38,6 +39,8 @@ from .schema_utils import field
 
 @dataclass(slots=True, frozen=True)
 class TranslateAllArgs:
+    """Arguments for the ``translate_all`` table-in-out function."""
+
     # NOTE on argument names: DuckDB exposes each named argument under its
     # *field name* and looks the supplied value up by the same name, so the
     # field name and the ``Arg(...)`` alias MUST match. ``to`` / ``from`` would
@@ -55,7 +58,7 @@ class TranslateAllArgs:
 
 def _text_column(input_schema: pa.Schema, id_col: str) -> str:
     """Return the single text column: the one input column that is not the id."""
-    candidates = [n for n in input_schema.names if n != id_col]
+    candidates: list[str] = [n for n in input_schema.names if n != id_col]
     if not candidates:
         raise ValueError(
             f"translate_all needs a text column to translate; the input only contains the id column {id_col!r}"
@@ -75,6 +78,8 @@ class TranslateAll(TableInOutGenerator[TranslateAllArgs]):
     FunctionArguments: ClassVar[type] = TranslateAllArgs
 
     class Meta:
+        """Function metadata."""
+
         name = "translate_all"
         description = "Translate a table of text rows in batch, carrying an id column through"
         categories = ["translation", "nlp", "batch"]
@@ -90,6 +95,7 @@ class TranslateAll(TableInOutGenerator[TranslateAllArgs]):
 
     @classmethod
     def on_bind(cls, params: BindParams[TranslateAllArgs]) -> BindResponse:
+        """Validate arguments and compute the output schema at plan time."""
         a = params.args
         input_schema = params.bind_call.input_schema
         assert input_schema is not None
@@ -124,6 +130,7 @@ class TranslateAll(TableInOutGenerator[TranslateAllArgs]):
         batch: pa.RecordBatch,
         out: OutputCollector,
     ) -> None:
+        """Translate each row of one input batch and emit the result batch."""
         a = params.args
         backend = get_backend()
         to_code = normalize_lang(a.target)
