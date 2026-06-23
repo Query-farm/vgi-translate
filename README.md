@@ -4,7 +4,9 @@
 
 <p align="center"><em>A <a href="https://query.farm">Query.Farm</a> VGI worker for DuckDB.</em></p>
 
-# vgi-translate
+# Offline Neural Machine Translation & Language Detection in DuckDB
+
+> **vgi-translate** · a [Query.Farm](https://query.farm) VGI worker · powered by Argos Translate
 
 A [VGI](https://github.com/query-farm/vgi-python) worker that brings **local
 neural machine translation** into DuckDB/SQL: translate columns of text and
