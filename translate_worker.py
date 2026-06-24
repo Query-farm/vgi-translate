@@ -45,7 +45,13 @@ _TRANSLATE_CATALOG = Catalog(
     default_schema="main",
     comment="Local neural machine translation and language detection for DuckDB/SQL.",
     tags={
-        "vgi.description_llm": (
+        "vgi.title": "Local Machine Translation & Language Detection",
+        "vgi.keywords": (
+            "translate, translation, machine translation, neural machine translation, NMT, "
+            "language detection, detect language, language identification, ISO 639-1, "
+            "Argos Translate, OPUS-MT, offline translation, multilingual, localization, i18n"
+        ),
+        "vgi.doc_llm": (
             "Translate text between languages and detect the language of text, fully "
             "offline using local neural machine-translation models (Argos Translate / "
             "OPUS-MT). Provides scalar functions to translate a string into a target "
@@ -55,7 +61,7 @@ _TRANSLATE_CATALOG = Catalog(
             "time once a language package is cached. Use for in-SQL machine translation "
             "and language identification."
         ),
-        "vgi.description_md": (
+        "vgi.doc_md": (
             "# translate\n\n"
             "Local neural machine translation and language detection over Apache Arrow.\n\n"
             "Scalars: `translate(text, target)`, `translate(text, target, source)`, "
@@ -65,7 +71,7 @@ _TRANSLATE_CATALOG = Catalog(
         ),
         "vgi.author": "Query.Farm",
         "vgi.copyright": "Copyright 2026 Query Farm LLC - https://query.farm",
-        "vgi.license": "Query Farm Source-Available License, Version 1.0",
+        "vgi.license": "LicenseRef-QueryFarm-Source-Available-1.0",
         "vgi.support_contact": f"{_REPO_URL}/issues",
         "vgi.support_policy_url": f"{_REPO_URL}/blob/main/README.md",
     },
@@ -75,13 +81,36 @@ _TRANSLATE_CATALOG = Catalog(
             name="main",
             comment="Local neural machine translation and language detection for SQL.",
             tags={
-                "vgi.description_llm": (
+                "vgi.title": "Translate — main",
+                "vgi.keywords": (
+                    "translate, detect_lang, translate_all, machine translation, language "
+                    "detection, ISO 639-1, multilingual, localization, NMT"
+                ),
+                # VGI123 classifying tags use BARE keys (not vgi.-namespaced) for faceting.
+                "domain": "natural-language-processing",
+                "category": "translation",
+                "topic": "machine-translation",
+                "vgi.source_url": f"{_REPO_URL}/blob/main/translate_worker.py",
+                "vgi.doc_llm": (
                     "Machine-translation and language-detection functions: translate text "
                     "into a target language (source auto-detected or explicit), detect the "
                     "ISO 639-1 language code of text, and translate a streamed table of "
                     "rows in batch with an id passthrough column."
                 ),
-                "vgi.description_md": ("Machine-translation and language-detection functions over Apache Arrow."),
+                "vgi.doc_md": (
+                    "Machine-translation and language-detection functions over Apache Arrow.\n\n"
+                    "Use `translate` / `detect_lang` for per-row scalar work and "
+                    "`translate_all` for high-throughput batch translation of a whole table."
+                ),
+                # VGI506 representative example queries for the schema (executed by the linter).
+                "vgi.example_queries": (
+                    "SELECT translate.main.translate('The quick brown fox jumps over the lazy dog.', 'es');\n"
+                    "SELECT translate.main.translate('Hola, mundo.', 'en', 'es');\n"
+                    "SELECT translate.main.detect_lang('Bonjour le monde');\n"
+                    "SELECT * FROM translate.main.translate_all("
+                    "(SELECT 1 AS id, 'The quick brown fox jumps over the lazy dog.' AS body), "
+                    "id := 'id', target := 'es', source := 'en');"
+                ),
             },
             functions=list(_FUNCTIONS),
         ),

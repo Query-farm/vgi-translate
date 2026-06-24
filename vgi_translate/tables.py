@@ -34,6 +34,7 @@ from vgi.table_in_out_function import TableInOutGenerator
 from vgi_rpc.rpc import OutputCollector
 
 from .backend import AUTO, get_backend, normalize_lang
+from .meta import object_tags
 from .schema_utils import field
 
 
@@ -87,13 +88,62 @@ class TranslateAll(TableInOutGenerator[TranslateAllArgs]):
             FunctionExample(
                 sql=(
                     "SELECT * FROM translate.main.translate_all("
-                    "(SELECT id, body FROM messages), id := 'id', target := 'es', source := 'auto')"
+                    "(SELECT 1 AS id, 'The quick brown fox jumps over the lazy dog.' AS body), "
+                    "id := 'id', target := 'es', source := 'en')"
                 ),
-                description="Translate a messages table to Spanish in batch, detecting the source language per row",
+                description="Translate a table of rows from English to Spanish in batch, carrying the id through",
             )
         ]
         tags = {
-            "vgi.columns_md": (
+            **object_tags(
+                title="Translate Table of Rows in Batch",
+                doc_llm=(
+                    "# translate_all\n\n"
+                    "Batched, table-in / table-out translation: stream a table of "
+                    "`(id, text)` rows through the local neural model and emit "
+                    "`(id, text, translation, src_lang)`. This is the **throughput path** — "
+                    "it batches whole Arrow record batches and reuses the per-process model "
+                    "cache, so a single language-package load serves the entire scan.\n\n"
+                    "**Inputs (named arguments)**\n"
+                    "- `data` (table): a subquery selecting exactly one text column plus, "
+                    "optionally, the id column.\n"
+                    "- `target` (VARCHAR, required): ISO 639-1 target language code.\n"
+                    "- `source` (VARCHAR, default `'auto'`): ISO 639-1 source code, or "
+                    "`'auto'` to detect per row.\n"
+                    "- `id` (VARCHAR, optional): name of a passthrough id column carried "
+                    "through unchanged so the result joins back to the source.\n\n"
+                    "**Output columns**: `id` (only when `id :=` given), `text`, "
+                    "`translation`, `src_lang`.\n\n"
+                    "**When to use**: translating an entire column/table efficiently. Prefer "
+                    "this over the `translate` scalar for anything beyond a few rows.\n\n"
+                    "**Behavior & edge cases**: the input must contain exactly one non-id "
+                    "text column (errors otherwise); `NULL` text yields `NULL` translation "
+                    "and `src_lang`; `target` is required."
+                ),
+                doc_md=(
+                    "## translate_all(data, id, target, source)\n\n"
+                    "Batch-translate a streamed table, carrying an id column through so the "
+                    "result joins back to the source. The high-throughput counterpart to "
+                    "the `translate` scalar.\n\n"
+                    "### Usage\n\n"
+                    "```sql\n"
+                    "SELECT * FROM translate.main.translate_all(\n"
+                    "  (SELECT id, body FROM messages),\n"
+                    "  id := 'id', target := 'es', source := 'auto');\n"
+                    "```\n\n"
+                    "### Notes\n\n"
+                    "- Named arguments are `id`, `target`, `source` (not `to`/`from`, which "
+                    "are SQL reserved words).\n"
+                    "- The input must have exactly one non-id text column.\n"
+                    "- See the returned columns documented below."
+                ),
+                keywords=(
+                    "translate_all, batch translation, table function, bulk translate, "
+                    "translate column, throughput, machine translation, id passthrough, NMT"
+                ),
+                relative_path="tables.py",
+            ),
+            "vgi.result_columns_md": (
                 "| column | type | description |\n"
                 "|---|---|---|\n"
                 "| *id* | (input type) | The passthrough id column (present only when `id :=` is given), "

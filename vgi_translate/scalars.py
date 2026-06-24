@@ -27,6 +27,7 @@ first call for a language pair lazily installs the Argos package.
 
 from __future__ import annotations
 
+import json
 from typing import Annotated
 
 import pyarrow as pa
@@ -35,6 +36,27 @@ from vgi.metadata import FunctionExample
 from vgi.scalar_function import ScalarFunction
 
 from .backend import detect_language, get_backend
+from .meta import object_tags
+
+# VGI509 executable examples: self-contained, catalog-qualified SQL the linter
+# runs against the attached worker. expected_result is omitted deliberately.
+_EXECUTABLE_EXAMPLES = json.dumps(
+    [
+        {
+            "description": "Translate an English sentence into Spanish (auto-detect source).",
+            "sql": "SELECT translate.main.translate('The quick brown fox jumps over the lazy dog.', 'es') AS es",
+        },
+        {
+            "description": "Translate a Spanish string back into English with an explicit source.",
+            "sql": "SELECT translate.main.translate('Hola, mundo.', 'en', 'es') AS en",
+        },
+        {
+            "description": "Detect the ISO 639-1 language code of a French phrase.",
+            "sql": "SELECT translate.main.detect_lang('Bonjour le monde') AS lang",
+        },
+    ],
+    indent=2,
+)
 
 
 def _translate_column(text: pa.StringArray, *, to_code: str, from_code: str) -> pa.StringArray:
@@ -66,10 +88,57 @@ class TranslateAuto(ScalarFunction):
         categories = ["translation", "nlp"]
         examples = [
             FunctionExample(
-                sql="SELECT translate.main.translate('Hello, world.', 'es')",
-                description="Translate to Spanish, detecting the source language (returns 'Hola, mundo.')",
+                sql="SELECT translate.main.translate('The quick brown fox jumps over the lazy dog.', 'es')",
+                description="Translate an English sentence to Spanish, detecting the source language",
             ),
         ]
+        tags = {
+            **object_tags(
+                title="Translate Text (Auto-Detect Source)",
+                doc_llm=(
+                    "# translate (auto-detect source)\n\n"
+                    "Translate a text value into a target language with a **local neural "
+                    "machine-translation model**, automatically detecting the source "
+                    "language per row. This is the two-argument overload "
+                    "`translate(text, target)`; use the three-argument overload when you "
+                    "already know the source language.\n\n"
+                    "**Inputs**\n"
+                    "- `text` (VARCHAR): the string to translate. `NULL` passes through as "
+                    "`NULL`.\n"
+                    "- `target` (VARCHAR constant): ISO 639-1 target language code, e.g. "
+                    "`'es'`, `'fr'`, `'de'`.\n\n"
+                    "**Output**: VARCHAR translated text.\n\n"
+                    "**When to use**: translating short, free-form strings inline in SQL "
+                    "when the source language is unknown or mixed. For large tables prefer "
+                    "the `translate_all` table function, which loads the model once per "
+                    "scan.\n\n"
+                    "**Behavior & edge cases**: detection runs offline; the first call for "
+                    "a language pair lazily installs the Argos package and caches it for "
+                    "the worker process. Empty/whitespace input may detect as undetermined "
+                    "and pass through largely unchanged."
+                ),
+                doc_md=(
+                    "## translate(text, target)\n\n"
+                    "Translate a string into `target`, **auto-detecting** the source "
+                    "language. Powered by Argos Translate (MIT, OPUS-MT) and runs fully "
+                    "offline once the language pair is cached.\n\n"
+                    "### Usage\n\n"
+                    "```sql\n"
+                    "SELECT translate.main.translate('Hello, world.', 'es'); -- Hola, mundo.\n"
+                    "```\n\n"
+                    "### Notes\n\n"
+                    "- `target` is an ISO 639-1 code such as `es`, `fr`, `de`.\n"
+                    "- `NULL` input yields `NULL`.\n"
+                    "- Use the three-argument overload to supply an explicit source, or "
+                    "`translate_all` for batch throughput."
+                ),
+                keywords=(
+                    "translate, translation, machine translation, auto-detect, neural, "
+                    "to spanish, to french, localize, localise, multilingual, NMT"
+                ),
+                relative_path="scalars.py",
+            ),
+        }
 
     @classmethod
     def compute(
@@ -97,10 +166,54 @@ class Translate(ScalarFunction):
         categories = ["translation", "nlp"]
         examples = [
             FunctionExample(
-                sql="SELECT translate.main.translate(comment, 'en', 'es') FROM reviews",
-                description="Translate a known-Spanish column into English",
+                sql="SELECT translate.main.translate('Hola, mundo.', 'en', 'es')",
+                description="Translate a known-Spanish string into English (returns 'Hello, world.')",
             ),
         ]
+        tags = {
+            **object_tags(
+                title="Translate Text (Explicit Source)",
+                doc_llm=(
+                    "# translate (explicit source)\n\n"
+                    "Translate a text value from a **known source language** into a target "
+                    "language using a local neural machine-translation model. This is the "
+                    "three-argument overload `translate(text, target, source)`.\n\n"
+                    "**Inputs**\n"
+                    "- `text` (VARCHAR): the string to translate. `NULL` passes through as "
+                    "`NULL`.\n"
+                    "- `target` (VARCHAR constant): ISO 639-1 target language code.\n"
+                    "- `source` (VARCHAR constant): ISO 639-1 source language code, or "
+                    "`'auto'` to detect per row.\n\n"
+                    "**Output**: VARCHAR translated text.\n\n"
+                    "**When to use**: prefer this overload when the source language is known "
+                    "(skips detection and avoids mis-detection on short strings). Pass "
+                    "`source := 'auto'` to fall back to detection. For large tables use the "
+                    "`translate_all` table function instead.\n\n"
+                    "**Behavior & edge cases**: the first call for a language pair lazily "
+                    "installs and caches the Argos package; subsequent calls are offline."
+                ),
+                doc_md=(
+                    "## translate(text, target, source)\n\n"
+                    "Translate a string from an **explicit** `source` language into "
+                    "`target`. Skips language detection, which is faster and more reliable "
+                    "for short strings of a known language.\n\n"
+                    "### Usage\n\n"
+                    "```sql\n"
+                    "SELECT translate.main.translate('Hola, mundo.', 'en', 'es'); -- Hello, world.\n"
+                    "```\n\n"
+                    "### Notes\n\n"
+                    "- `source` / `target` are ISO 639-1 codes; pass `source := 'auto'` to "
+                    "detect instead.\n"
+                    "- `NULL` input yields `NULL`."
+                ),
+                keywords=(
+                    "translate, translation, explicit source, from language, machine "
+                    "translation, neural, multilingual, NMT, localize, localise"
+                ),
+                relative_path="scalars.py",
+            ),
+            "vgi.executable_examples": _EXECUTABLE_EXAMPLES,
+        }
 
     @classmethod
     def compute(
@@ -132,10 +245,52 @@ class DetectLang(ScalarFunction):
                 description="Detect the language of a phrase (returns 'fr')",
             ),
             FunctionExample(
-                sql="SELECT translate.main.detect_lang(body) FROM messages",
-                description="Tag each message with its detected ISO 639-1 language code",
+                sql="SELECT translate.main.detect_lang('Guten Morgen')",
+                description="Detect the language of a German greeting (returns 'de')",
             ),
         ]
+        tags = {
+            **object_tags(
+                title="Detect Text Language Code",
+                doc_llm=(
+                    "# detect_lang\n\n"
+                    "Detect and return the **ISO 639-1 language code** of each input string "
+                    "using a bundled, fully-offline language-identification model "
+                    "(`py3langid`). No download, ever.\n\n"
+                    "**Inputs**\n"
+                    "- `text` (VARCHAR): the string whose language to identify. `NULL` "
+                    "passes through as `NULL`.\n\n"
+                    "**Output**: VARCHAR — a two-letter ISO 639-1 code such as `'en'`, "
+                    "`'fr'`, `'de'`; empty/whitespace-only input yields `'und'` "
+                    "(undetermined).\n\n"
+                    "**When to use**: route, filter, or tag rows by language before "
+                    "translating, or to populate a language column. Detection is per row "
+                    "and most reliable on longer text; very short strings can be "
+                    "ambiguous.\n\n"
+                    "**Behavior & edge cases**: deterministic and offline; pair with "
+                    "`translate` (passing the detected code as the source) for an "
+                    "explicit-source translation pipeline."
+                ),
+                doc_md=(
+                    "## detect_lang(text)\n\n"
+                    "Return the **ISO 639-1** language code of a string using a bundled "
+                    "offline identifier (`py3langid`, BSD). Never downloads.\n\n"
+                    "### Usage\n\n"
+                    "```sql\n"
+                    "SELECT translate.main.detect_lang('Bonjour le monde'); -- fr\n"
+                    "```\n\n"
+                    "### Notes\n\n"
+                    "- Empty/whitespace input returns `und` (undetermined).\n"
+                    "- `NULL` input yields `NULL`.\n"
+                    "- Most reliable on longer text; short strings can be ambiguous."
+                ),
+                keywords=(
+                    "detect language, language detection, language identification, "
+                    "ISO 639-1, langid, what language, lang code, locale, nlp"
+                ),
+                relative_path="scalars.py",
+            ),
+        }
 
     @classmethod
     def compute(
