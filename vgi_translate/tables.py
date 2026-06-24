@@ -86,12 +86,23 @@ class TranslateAll(TableInOutGenerator[TranslateAllArgs]):
         examples = [
             FunctionExample(
                 sql=(
-                    "SELECT * FROM translate.translate_all("
+                    "SELECT * FROM translate.main.translate_all("
                     "(SELECT id, body FROM messages), id := 'id', target := 'es', source := 'auto')"
                 ),
-                description="Translate a messages table to Spanish, detecting the source language",
+                description="Translate a messages table to Spanish in batch, detecting the source language per row",
             )
         ]
+        tags = {
+            "vgi.columns_md": (
+                "| column | type | description |\n"
+                "|---|---|---|\n"
+                "| *id* | (input type) | The passthrough id column (present only when `id :=` is given), "
+                "copied unchanged so the result joins back to the source. |\n"
+                "| `text` | VARCHAR | The original source text. |\n"
+                "| `translation` | VARCHAR | The translated text. |\n"
+                "| `src_lang` | VARCHAR | Source language used (detected when `source := 'auto'`). |"
+            ),
+        }
 
     @classmethod
     def on_bind(cls, params: BindParams[TranslateAllArgs]) -> BindResponse:

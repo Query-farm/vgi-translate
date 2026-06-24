@@ -66,8 +66,8 @@ class TranslateAuto(ScalarFunction):
         categories = ["translation", "nlp"]
         examples = [
             FunctionExample(
-                sql="SELECT translate('Hello, world.', 'es')",
-                description="Translate to Spanish, detecting the source language",
+                sql="SELECT translate.main.translate('Hello, world.', 'es')",
+                description="Translate to Spanish, detecting the source language (returns 'Hola, mundo.')",
             ),
         ]
 
@@ -97,8 +97,8 @@ class Translate(ScalarFunction):
         categories = ["translation", "nlp"]
         examples = [
             FunctionExample(
-                sql="SELECT translate(comment, 'en', 'es') FROM reviews",
-                description="Translate a Spanish column to English",
+                sql="SELECT translate.main.translate(comment, 'en', 'es') FROM reviews",
+                description="Translate a known-Spanish column into English",
             ),
         ]
 
@@ -128,12 +128,12 @@ class DetectLang(ScalarFunction):
         categories = ["translation", "nlp"]
         examples = [
             FunctionExample(
-                sql="SELECT detect_lang('Bonjour le monde')",
-                description="Returns 'fr'",
+                sql="SELECT translate.main.detect_lang('Bonjour le monde')",
+                description="Detect the language of a phrase (returns 'fr')",
             ),
             FunctionExample(
-                sql="SELECT detect_lang(body) FROM messages",
-                description="Tag each message with its detected language",
+                sql="SELECT translate.main.detect_lang(body) FROM messages",
+                description="Tag each message with its detected ISO 639-1 language code",
             ),
         ]
 
