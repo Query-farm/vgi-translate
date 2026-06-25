@@ -1,7 +1,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "vgi-python[http]>=0.8.4",
+#     "vgi-python[http]>=0.8.5",
 #     "argostranslate>=1.9",
 #     "py3langid>=0.3",
 # ]
@@ -30,6 +30,8 @@ opt into another backend.
 
 from __future__ import annotations
 
+import json
+
 from vgi import Worker
 from vgi.catalog import Catalog, Schema
 
@@ -46,10 +48,24 @@ _TRANSLATE_CATALOG = Catalog(
     comment="Local neural machine translation and language detection for DuckDB/SQL.",
     tags={
         "vgi.title": "Local Machine Translation & Language Detection",
-        "vgi.keywords": (
-            "translate, translation, machine translation, neural machine translation, NMT, "
-            "language detection, detect language, language identification, ISO 639-1, "
-            "Argos Translate, OPUS-MT, offline translation, multilingual, localization, i18n"
+        "vgi.keywords": json.dumps(
+            [
+                "translate",
+                "translation",
+                "machine translation",
+                "neural machine translation",
+                "NMT",
+                "language detection",
+                "detect language",
+                "language identification",
+                "ISO 639-1",
+                "Argos Translate",
+                "OPUS-MT",
+                "offline translation",
+                "multilingual",
+                "localization",
+                "i18n",
+            ]
         ),
         "vgi.doc_llm": (
             "Translate text between languages and detect the language of text, fully "
@@ -82,15 +98,23 @@ _TRANSLATE_CATALOG = Catalog(
             comment="Local neural machine translation and language detection for SQL.",
             tags={
                 "vgi.title": "Translate — main",
-                "vgi.keywords": (
-                    "translate, detect_lang, translate_all, machine translation, language "
-                    "detection, ISO 639-1, multilingual, localization, NMT"
+                "vgi.keywords": json.dumps(
+                    [
+                        "translate",
+                        "detect_lang",
+                        "translate_all",
+                        "machine translation",
+                        "language detection",
+                        "ISO 639-1",
+                        "multilingual",
+                        "localization",
+                        "NMT",
+                    ]
                 ),
                 # VGI123 classifying tags use BARE keys (not vgi.-namespaced) for faceting.
                 "domain": "natural-language-processing",
                 "category": "translation",
                 "topic": "machine-translation",
-                "vgi.source_url": f"{_REPO_URL}/blob/main/translate_worker.py",
                 "vgi.doc_llm": (
                     "Machine-translation and language-detection functions: translate text "
                     "into a target language (source auto-detected or explicit), detect the "

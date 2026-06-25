@@ -132,11 +132,19 @@ class TranslateAuto(ScalarFunction):
                     "- Use the three-argument overload to supply an explicit source, or "
                     "`translate_all` for batch throughput."
                 ),
-                keywords=(
-                    "translate, translation, machine translation, auto-detect, neural, "
-                    "to spanish, to french, localize, localise, multilingual, NMT"
-                ),
-                relative_path="scalars.py",
+                keywords=[
+                    "translate",
+                    "translation",
+                    "machine translation",
+                    "auto-detect",
+                    "neural",
+                    "to spanish",
+                    "to french",
+                    "localize",
+                    "localise",
+                    "multilingual",
+                    "NMT",
+                ],
             ),
         }
 
@@ -206,11 +214,18 @@ class Translate(ScalarFunction):
                     "detect instead.\n"
                     "- `NULL` input yields `NULL`."
                 ),
-                keywords=(
-                    "translate, translation, explicit source, from language, machine "
-                    "translation, neural, multilingual, NMT, localize, localise"
-                ),
-                relative_path="scalars.py",
+                keywords=[
+                    "translate",
+                    "translation",
+                    "explicit source",
+                    "from language",
+                    "machine translation",
+                    "neural",
+                    "multilingual",
+                    "NMT",
+                    "localize",
+                    "localise",
+                ],
             ),
             "vgi.executable_examples": _EXECUTABLE_EXAMPLES,
         }
@@ -284,11 +299,17 @@ class DetectLang(ScalarFunction):
                     "- `NULL` input yields `NULL`.\n"
                     "- Most reliable on longer text; short strings can be ambiguous."
                 ),
-                keywords=(
-                    "detect language, language detection, language identification, "
-                    "ISO 639-1, langid, what language, lang code, locale, nlp"
-                ),
-                relative_path="scalars.py",
+                keywords=[
+                    "detect language",
+                    "language detection",
+                    "language identification",
+                    "ISO 639-1",
+                    "langid",
+                    "what language",
+                    "lang code",
+                    "locale",
+                    "nlp",
+                ],
             ),
         }
 

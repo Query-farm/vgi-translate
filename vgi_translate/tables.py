@@ -48,7 +48,10 @@ class TranslateAllArgs:
     # be ideal but are SQL reserved keywords (and ``from`` is a Python keyword,
     # so it can only be the field ``from_`` — a name DuckDB then can't route a
     # value to). We therefore use the non-reserved ``target`` / ``source``.
-    data: Annotated[TableInput, Arg(0, doc="Table to translate (an id column + one text column).")]
+    data: Annotated[
+        TableInput,
+        Arg(0, doc="Rows to translate: a subquery selecting one text column plus, optionally, the id column."),
+    ]
     target: Annotated[str, Arg("target", default="", doc="Target language code, e.g. 'es' (ISO 639-1). Required.")]
     source: Annotated[
         str,
@@ -137,11 +140,17 @@ class TranslateAll(TableInOutGenerator[TranslateAllArgs]):
                     "- The input must have exactly one non-id text column.\n"
                     "- See the returned columns documented below."
                 ),
-                keywords=(
-                    "translate_all, batch translation, table function, bulk translate, "
-                    "translate column, throughput, machine translation, id passthrough, NMT"
-                ),
-                relative_path="tables.py",
+                keywords=[
+                    "translate_all",
+                    "batch translation",
+                    "table function",
+                    "bulk translate",
+                    "translate column",
+                    "throughput",
+                    "machine translation",
+                    "id passthrough",
+                    "NMT",
+                ],
             ),
             "vgi.result_columns_md": (
                 "| column | type | description |\n"
