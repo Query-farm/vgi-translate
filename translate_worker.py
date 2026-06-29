@@ -79,6 +79,8 @@ _TRANSLATE_CATALOG = Catalog(
         ),
         "vgi.doc_md": (
             "# Offline Machine Translation & Language Detection in SQL\n\n"
+            "![Argos Translate logo]"
+            "(https://raw.githubusercontent.com/argosopentech/argos-translate/master/img/icon.png)\n\n"
             "Translate text between languages and identify the language of any string "
             "directly in DuckDB SQL — fully offline, with no API keys, no rate limits, "
             "and no data ever leaving your machine. This VGI extension brings local "
