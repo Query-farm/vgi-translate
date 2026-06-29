@@ -1,7 +1,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "vgi-python[http]>=0.8.5",
+#     "vgi-python[http]>=0.8.8",
 #     "argostranslate>=1.9",
 #     "py3langid>=0.3",
 # ]
@@ -78,12 +78,40 @@ _TRANSLATE_CATALOG = Catalog(
             "and language identification."
         ),
         "vgi.doc_md": (
-            "# translate\n\n"
-            "Local neural machine translation and language detection over Apache Arrow.\n\n"
-            "Scalars: `translate(text, target)`, `translate(text, target, source)`, "
-            "`detect_lang(text)`. Table: `translate_all(rows, id, target, source)`.\n\n"
-            "Default backend is **Argos Translate** (MIT; OPUS-MT models), so it is "
-            "commercial-safe and runs fully offline."
+            "# Offline Machine Translation & Language Detection in SQL\n\n"
+            "Translate text between languages and identify the language of any string "
+            "directly in DuckDB SQL — fully offline, with no API keys, no rate limits, "
+            "and no data ever leaving your machine. This VGI extension brings local "
+            "**neural machine translation (NMT)** and **language detection** to your "
+            "queries, so multilingual text processing, localization (i18n), and "
+            "content normalization become ordinary SQL.\n\n"
+            "Translation is powered by [Argos Translate]"
+            "(https://github.com/argosopentech/argos-translate) "
+            "([project site & docs](https://www.argosopentech.com/)), an open-source "
+            "(MIT-licensed) offline translation library built on the "
+            "[OPUS-MT](https://github.com/Helsinki-NLP/Opus-MT) neural models trained on "
+            "the [OPUS](https://opus.nlpl.eu/) parallel corpora. Language packages install "
+            "lazily on first use and are cached per worker process, so a model loads once "
+            "and then serves every subsequent query at full speed with zero network access. "
+            "Because Argos Translate and the OPUS-MT models are permissively licensed, this "
+            "default backend is **commercial-safe** (the CC-BY-NC NLLB-200 models are "
+            "intentionally not the default). Language detection uses "
+            "[py3langid](https://github.com/adbar/py3langid), a fast BSD-licensed "
+            "identifier that ships its own model and runs entirely offline.\n\n"
+            "The catalog exposes a small, focused function surface. The scalar "
+            "`translate(text, target)` translates a string into an ISO 639-1 target "
+            "language while auto-detecting the source per row, and the "
+            "`translate(text, target, source)` overload lets you pin an explicit source "
+            "language. `detect_lang(text)` returns the detected ISO 639-1 language code of "
+            "each value. For high-throughput workloads, the table function "
+            "`translate_all(rows, id, target, source)` streams a whole table of rows "
+            "through the model in batches — reusing the cached model across the entire scan "
+            "and carrying an `id` column through so results join straight back to the "
+            "source. Typical uses include translating user-generated content, "
+            "normalizing multilingual product catalogs and support tickets, building "
+            "localization pipelines, and routing or filtering rows by detected language. "
+            "Source, issues, and full documentation live in the "
+            "[project repository](https://github.com/Query-farm/vgi-translate)."
         ),
         "vgi.author": "Query.Farm",
         "vgi.copyright": "Copyright 2026 Query Farm LLC - https://query.farm",
