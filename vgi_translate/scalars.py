@@ -146,6 +146,7 @@ class TranslateAuto(ScalarFunction):
                     "NMT",
                 ],
             ),
+            "vgi.category": "translation",
         }
 
     @classmethod
@@ -227,6 +228,7 @@ class Translate(ScalarFunction):
                     "localise",
                 ],
             ),
+            "vgi.category": "translation",
             "vgi.executable_examples": _EXECUTABLE_EXAMPLES,
         }
 
@@ -311,6 +313,7 @@ class DetectLang(ScalarFunction):
                     "nlp",
                 ],
             ),
+            "vgi.category": "language-detection",
         }
 
     @classmethod

@@ -12,3 +12,6 @@ duckdb_unittest_tempdir/
 # Argos package cache / data home, if pointed inside the repo for tests
 .argos/
 *.argosmodel
+
+# vgi-lint AI verdict cache
+.vgi-*-cache.json

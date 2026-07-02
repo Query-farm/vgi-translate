@@ -152,6 +152,7 @@ class TranslateAll(TableInOutGenerator[TranslateAllArgs]):
                     "NMT",
                 ],
             ),
+            "vgi.category": "translation",
             "vgi.result_columns_md": (
                 "| column | type | description |\n"
                 "|---|---|---|\n"

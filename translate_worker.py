@@ -42,6 +42,70 @@ _FUNCTIONS: list[type] = [*SCALAR_FUNCTIONS, *TABLE_FUNCTIONS]
 
 _REPO_URL = "https://github.com/Query-farm/vgi-translate"
 
+# VGI152/VGI920 fixed analyst-task suite for `vgi-lint simulate`. Only ``prompt``
+# is shown to the analyst; ``reference_sql`` is the grader-only canonical answer.
+# Language detection is deterministic and offline, so those references are exact
+# ISO 639-1 codes. The translation tasks compare the analyst's answer against the
+# same reference SQL run in the same worker session, so they self-match regardless
+# of the exact model output; ``ignore_column_names`` tolerates output aliasing.
+_AGENT_TEST_TASKS = json.dumps(
+    [
+        {
+            "name": "detect-french",
+            "prompt": (
+                "A user pasted the text 'Bonjour le monde, comment allez-vous ce matin?'. "
+                "Using this worker, return the ISO 639-1 language code it detects for that text."
+            ),
+            "reference_sql": "SELECT translate.main.detect_lang('Bonjour le monde, comment allez-vous ce matin?')",
+            "ignore_column_names": True,
+        },
+        {
+            "name": "detect-german",
+            "prompt": (
+                "Identify the language of the sentence 'Guten Morgen, wie geht es Ihnen heute?' "
+                "and return its ISO 639-1 code using this worker."
+            ),
+            "reference_sql": "SELECT translate.main.detect_lang('Guten Morgen, wie geht es Ihnen heute?')",
+            "ignore_column_names": True,
+        },
+        {
+            "name": "detect-spanish",
+            "prompt": (
+                "What ISO 639-1 language code does this worker report for the text "
+                "'Hola, mucho gusto en conocerte.'? Return a single value."
+            ),
+            "reference_sql": "SELECT translate.main.detect_lang('Hola, mucho gusto en conocerte.')",
+            "ignore_column_names": True,
+        },
+        {
+            "name": "translate-english-to-spanish",
+            "prompt": (
+                "Translate the English sentence 'The quick brown fox jumps over the lazy dog.' "
+                "into Spanish using this worker. The source language is English."
+            ),
+            "reference_sql": (
+                "SELECT translate.main.translate('The quick brown fox jumps over the lazy dog.', 'es', 'en')"
+            ),
+            "ignore_column_names": True,
+        },
+        {
+            "name": "translate-table-batch",
+            "prompt": (
+                "Using this worker's batch table function, translate a single input row with "
+                "id 1 and body 'Hello, world.' from English into Spanish, keeping the id column "
+                "in the output."
+            ),
+            "reference_sql": (
+                "SELECT * FROM translate.main.translate_all("
+                "(SELECT 1 AS id, 'Hello, world.' AS body), "
+                "id := 'id', target := 'es', source := 'en')"
+            ),
+            "ignore_column_names": True,
+            "unordered": True,
+        },
+    ]
+)
+
 _TRANSLATE_CATALOG = Catalog(
     name="translate",
     default_schema="main",
@@ -120,6 +184,7 @@ _TRANSLATE_CATALOG = Catalog(
         "vgi.license": "LicenseRef-QueryFarm-Source-Available-1.0",
         "vgi.support_contact": f"{_REPO_URL}/issues",
         "vgi.support_policy_url": f"{_REPO_URL}/blob/main/README.md",
+        "vgi.agent_test_tasks": _AGENT_TEST_TASKS,
     },
     source_url=_REPO_URL,
     schemas=[
@@ -145,6 +210,22 @@ _TRANSLATE_CATALOG = Catalog(
                 "domain": "natural-language-processing",
                 "category": "translation",
                 "topic": "machine-translation",
+                # VGI413 ordered category registry; each function carries a matching
+                # `vgi.category` naming one of these. Drives navigation/listing/SEO.
+                "vgi.categories": json.dumps(
+                    [
+                        {
+                            "name": "translation",
+                            "description": (
+                                "Translate text between languages with local neural machine-translation models."
+                            ),
+                        },
+                        {
+                            "name": "language-detection",
+                            "description": "Identify the ISO 639-1 language of text.",
+                        },
+                    ]
+                ),
                 "vgi.doc_llm": (
                     "Machine-translation and language-detection functions: translate text "
                     "into a target language (source auto-detected or explicit), detect the "
@@ -152,9 +233,18 @@ _TRANSLATE_CATALOG = Catalog(
                     "rows in batch with an id passthrough column."
                 ),
                 "vgi.doc_md": (
-                    "Machine-translation and language-detection functions over Apache Arrow.\n\n"
-                    "Use `translate` / `detect_lang` for per-row scalar work and "
-                    "`translate_all` for high-throughput batch translation of a whole table."
+                    "## Machine Translation & Language Detection\n\n"
+                    "Offline neural machine translation and language identification exposed as "
+                    "SQL over Apache Arrow. Everything runs locally — no API keys and no "
+                    "per-query network once a language package is cached.\n\n"
+                    "**What you can do here**\n\n"
+                    "- Translate a string into a target language, with the source auto-detected "
+                    "or supplied explicitly.\n"
+                    "- Detect the ISO 639-1 language code of any text.\n"
+                    "- Batch-translate a whole column of rows in one streamed pass, reusing a "
+                    "single cached model and carrying an id column through.\n\n"
+                    "See each function's own documentation for arguments, worked examples, and "
+                    "output columns."
                 ),
                 # VGI506 representative example queries for the schema (executed by the linter).
                 "vgi.example_queries": (

@@ -1,0 +1,17 @@
+# vgi-lint-check configuration for the vgi-translate worker.
+#
+# This worker loads local neural translation models (Argos / OPUS-MT) and the
+# py3langid identifier lazily on first use and caches them per process. Executing
+# the metadata examples across many parallel cursors (the default is one per CPU)
+# makes several *cold* model loads contend on the single per-process model cache,
+# so individual example queries blow the per-query wall-clock cap and report as
+# spurious execution failures/timeouts (VGI906/VGI901/VGI908).
+#
+# Serialize example execution: a single short sentence then translates in a few
+# seconds, comfortably under the cap, and the results are stable run to run.
+[tool.vgi-lint-check.execution]
+concurrency = 1
+# Give a cold first-translation (lazy model load) generous headroom, and don't
+# flag it as "slow": the load is a one-time per-process cost, not per query.
+timeout = 90
+slow_seconds = 30
