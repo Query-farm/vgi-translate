@@ -1,0 +1,49 @@
+# name: test/sql/translate_languages.test
+# description: The languages reference view — runs fully offline (static data)
+# group: [vgi_translate]
+
+require-env VGI_TRANSLATE_WORKER
+
+# Under haybarn-unittest, `require vgi` SKIPS the file; load the extension
+# explicitly instead so these tests actually run.
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'translate' AS tr (TYPE vgi, LOCATION '${VGI_TRANSLATE_WORKER}');
+
+# ============================================================================
+# languages view — browsable reference of ISO 639-1 codes
+# ============================================================================
+
+# The view is discoverable as a plain relation (no arguments to guess).
+query I
+SELECT count(*) > 0 FROM tr.languages;
+----
+true
+
+# Look up a code by English name (the documented example query).
+query I
+SELECT code FROM tr.languages WHERE name = 'Spanish';
+----
+es
+
+# Codes are unique two-letter ISO 639-1 strings.
+query I
+SELECT count(*) = count(DISTINCT code) FROM tr.languages;
+----
+true
+
+query I
+SELECT bool_and(length(code) = 2) FROM tr.languages;
+----
+true
+
+# The result is ordered by English name.
+query II
+SELECT code, name FROM tr.languages ORDER BY name LIMIT 1;
+----
+sq	Albanian
+
+statement ok
+DETACH tr;

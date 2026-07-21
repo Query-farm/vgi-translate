@@ -8,7 +8,7 @@ license = { file = "LICENSE" }
 authors = [{ name = "Query Farm" }]
 keywords = ["vgi", "duckdb", "translation", "nmt", "argos", "nlp"]
 dependencies = [
-    "vgi-python>=0.9.0",
+    "vgi-python>=0.16.0",
     "argostranslate>=1.9",
     "py3langid>=0.3",
 ]
@@ -18,13 +18,18 @@ dependencies = [
 # addition to stdio. That path needs vgi-python's `http` extra (waitress).
 # CI's http transport leg installs this via `uv sync --extra http`.
 http = [
-    "vgi-python[http]>=0.9.0",
+    "vgi-python[http]>=0.16.0",
 ]
 dev = [
     "pytest>=8",
     "ruff>=0.6",
     "mypy>=1.10",
-    "pydoclint",
+    # NOTE: pydoclint is intentionally NOT listed here. It depends on
+    # `docstring-parser-fork`, which installs the same top-level `docstring_parser`
+    # import package as the real `docstring-parser` that `vgi-rpc` imports at
+    # module load. Co-installing both leaves a broken `docstring_parser/` and the
+    # worker fails to import. CI (and `make lint` guidance) run pydoclint isolated
+    # via `uvx pydoclint` so it never enters this venv. See CLAUDE.md.
 ]
 
 # vgi-python is distributed on PyPI as `vgi-python`. For local development

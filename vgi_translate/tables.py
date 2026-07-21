@@ -22,6 +22,7 @@ rather than ``to`` / ``from`` because the latter are SQL reserved keywords.)
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from typing import Annotated, Any, ClassVar
 
@@ -36,6 +37,25 @@ from vgi_rpc.rpc import OutputCollector
 from .backend import AUTO, get_backend, normalize_lang
 from .meta import object_tags
 from .schema_utils import field
+
+# VGI515 described example query. Kept byte-identical (SQL) to the native
+# ``Meta.examples`` entry so the linter merges the two carriers and keeps this
+# described one. It projects specific columns (not ``SELECT *``) per VGI514.
+_TRANSLATE_ALL_EXAMPLE_QUERIES = json.dumps(
+    [
+        {
+            "description": (
+                "Batch-translate a table of rows from English to Spanish, carrying the id "
+                "through and projecting just the id and its translation."
+            ),
+            "sql": (
+                "SELECT id, translation FROM translate.main.translate_all("
+                "(SELECT 1 AS id, 'The quick brown fox jumps over the lazy dog.' AS body), "
+                "id := 'id', target := 'es', source := 'en')"
+            ),
+        }
+    ]
+)
 
 
 @dataclass(slots=True, frozen=True)
@@ -52,10 +72,12 @@ class TranslateAllArgs:
         TableInput,
         Arg(0, doc="Rows to translate: a subquery selecting one text column plus, optionally, the id column."),
     ]
-    target: Annotated[str, Arg("target", default="", doc="Target language code, e.g. 'es' (ISO 639-1). Required.")]
+    target: Annotated[
+        str, Arg("target", default="", doc="Target language code to translate the text into, e.g. 'es' (required).")
+    ]
     source: Annotated[
         str,
-        Arg("source", default=AUTO, doc="Source language code, or 'auto' to detect per row (default 'auto')."),
+        Arg("source", default=AUTO, doc="Source language code, or 'auto' to detect it per row."),
     ]
     id: Annotated[str, Arg("id", default="", doc="Name of an id column to carry through (excluded from translation).")]
 
@@ -90,7 +112,7 @@ class TranslateAll(TableInOutGenerator[TranslateAllArgs]):
         examples = [
             FunctionExample(
                 sql=(
-                    "SELECT * FROM translate.main.translate_all("
+                    "SELECT id, translation FROM translate.main.translate_all("
                     "(SELECT 1 AS id, 'The quick brown fox jumps over the lazy dog.' AS body), "
                     "id := 'id', target := 'es', source := 'en')"
                 ),
@@ -110,10 +132,10 @@ class TranslateAll(TableInOutGenerator[TranslateAllArgs]):
                     "**Inputs (named arguments)**\n"
                     "- `data` (table): a subquery selecting exactly one text column plus, "
                     "optionally, the id column.\n"
-                    "- `target` (VARCHAR, required): ISO 639-1 target language code.\n"
-                    "- `source` (VARCHAR, default `'auto'`): ISO 639-1 source code, or "
+                    "- `target` (`VARCHAR`, required): ISO 639-1 target language code.\n"
+                    "- `source` (`VARCHAR`, default `'auto'`): ISO 639-1 source code, or "
                     "`'auto'` to detect per row.\n"
-                    "- `id` (VARCHAR, optional): name of a passthrough id column carried "
+                    "- `id` (`VARCHAR`, optional): name of a passthrough id column carried "
                     "through unchanged so the result joins back to the source.\n\n"
                     "**Output columns**: `id` (only when `id :=` given), `text`, "
                     "`translation`, `src_lang`.\n\n"
@@ -129,11 +151,9 @@ class TranslateAll(TableInOutGenerator[TranslateAllArgs]):
                     "result joins back to the source. The high-throughput counterpart to "
                     "the `translate` scalar.\n\n"
                     "### Usage\n\n"
-                    "```sql\n"
-                    "SELECT * FROM translate.main.translate_all(\n"
-                    "  (SELECT id, body FROM messages),\n"
-                    "  id := 'id', target := 'es', source := 'auto');\n"
-                    "```\n\n"
+                    "Call it in a `FROM` clause over a subquery of rows, passing the named "
+                    "arguments `id := 'id', target := 'es', source := 'auto'`. See this "
+                    "function's example queries for complete, runnable statements.\n\n"
                     "### Notes\n\n"
                     "- Named arguments are `id`, `target`, `source` (not `to`/`from`, which "
                     "are SQL reserved words).\n"
@@ -153,14 +173,31 @@ class TranslateAll(TableInOutGenerator[TranslateAllArgs]):
                 ],
             ),
             "vgi.category": "translation",
-            "vgi.result_columns_md": (
-                "| column | type | description |\n"
-                "|---|---|---|\n"
-                "| *id* | (input type) | The passthrough id column (present only when `id :=` is given), "
-                "copied unchanged so the result joins back to the source. |\n"
-                "| `text` | VARCHAR | The original source text. |\n"
-                "| `translation` | VARCHAR | The translated text. |\n"
-                "| `src_lang` | VARCHAR | Source language used (detected when `source := 'auto'`). |"
+            "vgi.example_queries": _TRANSLATE_ALL_EXAMPLE_QUERIES,
+            # The result schema varies by argument: an `id :=` passthrough column is
+            # prepended only when requested, so this is the *dynamic* schema carrier
+            # (one Name|Type|Description table per variant). `id`'s type mirrors the
+            # input id column; VGI910 matches variants by column name, not type.
+            "vgi.result_dynamic_columns_md": (
+                "The result always contains `text`, `translation`, and `src_lang`. When "
+                "an `id :=` column is given it is prepended as a passthrough column so the "
+                "output joins straight back to the source; otherwise the result begins at "
+                "`text`.\n\n"
+                "### With an `id :=` passthrough column\n\n"
+                "| Name | Type | Description |\n"
+                "| --- | --- | --- |\n"
+                "| id | BIGINT | Passthrough id column, copied unchanged so the result joins "
+                "back to the source. Its type mirrors the input id column (shown here as "
+                "`BIGINT`). |\n"
+                "| text | VARCHAR | The original source text. |\n"
+                "| translation | VARCHAR | The translated text. |\n"
+                "| src_lang | VARCHAR | Source language used (detected when `source := 'auto'`). |\n\n"
+                "### Without an id column\n\n"
+                "| Name | Type | Description |\n"
+                "| --- | --- | --- |\n"
+                "| text | VARCHAR | The original source text. |\n"
+                "| translation | VARCHAR | The translated text. |\n"
+                "| src_lang | VARCHAR | Source language used (detected when `source := 'auto'`). |"
             ),
         }
 

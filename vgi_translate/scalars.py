@@ -58,6 +58,38 @@ _EXECUTABLE_EXAMPLES = json.dumps(
     indent=2,
 )
 
+# VGI515 described example queries. `Meta.examples` feeds the native
+# duckdb_functions().examples carrier, which drops each example's description; the
+# linter merges that carrier with this `vgi.example_queries` tag by SQL text, so
+# publishing the *same* queries here (byte-identical SQL) makes the described entry
+# win. The two `translate` arity overloads share one aggregated list because
+# examples are keyed by function name.
+_TRANSLATE_EXAMPLE_QUERIES = json.dumps(
+    [
+        {
+            "description": "Translate an English sentence into Spanish, auto-detecting the source language.",
+            "sql": "SELECT translate.main.translate('The quick brown fox jumps over the lazy dog.', 'es')",
+        },
+        {
+            "description": "Translate a Spanish string into English with an explicit source language.",
+            "sql": "SELECT translate.main.translate('Hola, mundo.', 'en', 'es')",
+        },
+    ]
+)
+
+_DETECT_EXAMPLE_QUERIES = json.dumps(
+    [
+        {
+            "description": "Detect the ISO 639-1 language code of a French phrase (returns 'fr').",
+            "sql": "SELECT translate.main.detect_lang('Bonjour le monde')",
+        },
+        {
+            "description": "Detect the language of a German greeting (returns 'de').",
+            "sql": "SELECT translate.main.detect_lang('Guten Morgen')",
+        },
+    ]
+)
+
 
 def _translate_column(text: pa.StringArray, *, to_code: str, from_code: str) -> pa.StringArray:
     """Translate every string in a column, preserving NULLs."""
@@ -103,11 +135,11 @@ class TranslateAuto(ScalarFunction):
                     "`translate(text, target)`; use the three-argument overload when you "
                     "already know the source language.\n\n"
                     "**Inputs**\n"
-                    "- `text` (VARCHAR): the string to translate. `NULL` passes through as "
+                    "- `text` (`VARCHAR`): the string to translate. `NULL` passes through as "
                     "`NULL`.\n"
-                    "- `target` (VARCHAR constant): ISO 639-1 target language code, e.g. "
+                    "- `target` (`VARCHAR` constant): ISO 639-1 target language code, e.g. "
                     "`'es'`, `'fr'`, `'de'`.\n\n"
-                    "**Output**: VARCHAR translated text.\n\n"
+                    "**Output**: `VARCHAR` translated text.\n\n"
                     "**When to use**: translating short, free-form strings inline in SQL "
                     "when the source language is unknown or mixed. For large tables prefer "
                     "the `translate_all` table function, which loads the model once per "
@@ -147,13 +179,14 @@ class TranslateAuto(ScalarFunction):
                 ],
             ),
             "vgi.category": "translation",
+            "vgi.example_queries": _TRANSLATE_EXAMPLE_QUERIES,
         }
 
     @classmethod
     def compute(
         cls,
         text: Annotated[pa.StringArray, Param(doc="Text to translate.")],
-        to_lang: Annotated[str, ConstParam("Target language code, e.g. 'es' (ISO 639-1).")],
+        to_lang: Annotated[str, ConstParam("Target language code to translate the text into, e.g. 'es'.")],
     ) -> Annotated[pa.StringArray, Returns()]:
         """Map each input row to its output value."""
         return _translate_column(text, to_code=to_lang, from_code="auto")
@@ -188,12 +221,12 @@ class Translate(ScalarFunction):
                     "language using a local neural machine-translation model. This is the "
                     "three-argument overload `translate(text, target, source)`.\n\n"
                     "**Inputs**\n"
-                    "- `text` (VARCHAR): the string to translate. `NULL` passes through as "
+                    "- `text` (`VARCHAR`): the string to translate. `NULL` passes through as "
                     "`NULL`.\n"
-                    "- `target` (VARCHAR constant): ISO 639-1 target language code.\n"
-                    "- `source` (VARCHAR constant): ISO 639-1 source language code, or "
+                    "- `target` (`VARCHAR` constant): ISO 639-1 target language code.\n"
+                    "- `source` (`VARCHAR` constant): ISO 639-1 source language code, or "
                     "`'auto'` to detect per row.\n\n"
-                    "**Output**: VARCHAR translated text.\n\n"
+                    "**Output**: `VARCHAR` translated text.\n\n"
                     "**When to use**: prefer this overload when the source language is known "
                     "(skips detection and avoids mis-detection on short strings). Pass "
                     "`source := 'auto'` to fall back to detection. For large tables use the "
@@ -229,6 +262,7 @@ class Translate(ScalarFunction):
                 ],
             ),
             "vgi.category": "translation",
+            "vgi.example_queries": _TRANSLATE_EXAMPLE_QUERIES,
             "vgi.executable_examples": _EXECUTABLE_EXAMPLES,
         }
 
@@ -236,7 +270,7 @@ class Translate(ScalarFunction):
     def compute(
         cls,
         text: Annotated[pa.StringArray, Param(doc="Text to translate.")],
-        to_lang: Annotated[str, ConstParam("Target language code, e.g. 'es' (ISO 639-1).")],
+        to_lang: Annotated[str, ConstParam("Target language code to translate the text into, e.g. 'es'.")],
         from_lang: Annotated[str, ConstParam("Source language code, or 'auto' to detect.")],
     ) -> Annotated[pa.StringArray, Returns()]:
         """Map each input row to its output value."""
@@ -275,9 +309,9 @@ class DetectLang(ScalarFunction):
                     "using a bundled, fully-offline language-identification model "
                     "(`py3langid`). No download, ever.\n\n"
                     "**Inputs**\n"
-                    "- `text` (VARCHAR): the string whose language to identify. `NULL` "
+                    "- `text` (`VARCHAR`): the string whose language to identify. `NULL` "
                     "passes through as `NULL`.\n\n"
-                    "**Output**: VARCHAR — a two-letter ISO 639-1 code such as `'en'`, "
+                    "**Output**: `VARCHAR` — a two-letter ISO 639-1 code such as `'en'`, "
                     "`'fr'`, `'de'`; empty/whitespace-only input yields `'und'` "
                     "(undetermined).\n\n"
                     "**When to use**: route, filter, or tag rows by language before "
@@ -314,6 +348,7 @@ class DetectLang(ScalarFunction):
                 ],
             ),
             "vgi.category": "language-detection",
+            "vgi.example_queries": _DETECT_EXAMPLE_QUERIES,
         }
 
     @classmethod

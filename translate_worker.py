@@ -1,7 +1,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "vgi-python[http]>=0.8.8",
+#     "vgi-python[http]>=0.16.0",
 #     "argostranslate>=1.9",
 #     "py3langid>=0.3",
 # ]
@@ -35,6 +35,7 @@ import json
 from vgi import Worker
 from vgi.catalog import Catalog, Schema
 
+from vgi_translate.languages import LANGUAGES_VIEW
 from vgi_translate.scalars import SCALAR_FUNCTIONS
 from vgi_translate.tables import TABLE_FUNCTIONS
 
@@ -102,6 +103,15 @@ _AGENT_TEST_TASKS = json.dumps(
             ),
             "ignore_column_names": True,
             "unordered": True,
+        },
+        {
+            "name": "lookup-language-code",
+            "prompt": (
+                "Using this worker, what ISO 639-1 language code does it list for the "
+                "language whose English name is 'Spanish'? Return a single value."
+            ),
+            "reference_sql": "SELECT code FROM translate.main.languages WHERE name = 'Spanish'",
+            "ignore_column_names": True,
         },
     ]
 )
@@ -224,6 +234,10 @@ _TRANSLATE_CATALOG = Catalog(
                             "name": "language-detection",
                             "description": "Identify the ISO 639-1 language of text.",
                         },
+                        {
+                            "name": "reference",
+                            "description": "Browsable reference data — the language codes the functions accept.",
+                        },
                     ]
                 ),
                 "vgi.doc_llm": (
@@ -246,16 +260,40 @@ _TRANSLATE_CATALOG = Catalog(
                     "See each function's own documentation for arguments, worked examples, and "
                     "output columns."
                 ),
-                # VGI506 representative example queries for the schema (executed by the linter).
-                "vgi.example_queries": (
-                    "SELECT translate.main.translate('The quick brown fox jumps over the lazy dog.', 'es');\n"
-                    "SELECT translate.main.translate('Hola, mundo.', 'en', 'es');\n"
-                    "SELECT translate.main.detect_lang('Bonjour le monde');\n"
-                    "SELECT * FROM translate.main.translate_all("
-                    "(SELECT 1 AS id, 'The quick brown fox jumps over the lazy dog.' AS body), "
-                    "id := 'id', target := 'es', source := 'en');"
+                # VGI506/VGI515 representative example queries for the schema: a JSON
+                # list of {description, sql} so every example carries a description.
+                "vgi.example_queries": json.dumps(
+                    [
+                        {
+                            "description": "Translate an English sentence into Spanish (auto-detecting the source).",
+                            "sql": (
+                                "SELECT translate.main.translate('The quick brown fox jumps over the lazy dog.', 'es')"
+                            ),
+                        },
+                        {
+                            "description": "Translate a Spanish string back into English with an explicit source.",
+                            "sql": "SELECT translate.main.translate('Hola, mundo.', 'en', 'es')",
+                        },
+                        {
+                            "description": "Detect the ISO 639-1 language code of a French phrase.",
+                            "sql": "SELECT translate.main.detect_lang('Bonjour le monde')",
+                        },
+                        {
+                            "description": "Batch-translate a table of rows, projecting the id and its translation.",
+                            "sql": (
+                                "SELECT id, translation FROM translate.main.translate_all("
+                                "(SELECT 1 AS id, 'The quick brown fox jumps over the lazy dog.' AS body), "
+                                "id := 'id', target := 'es', source := 'en')"
+                            ),
+                        },
+                        {
+                            "description": "Look up the ISO 639-1 code for a language by its English name.",
+                            "sql": "SELECT code FROM translate.main.languages WHERE name = 'Spanish'",
+                        },
+                    ]
                 ),
             },
+            views=[LANGUAGES_VIEW],
             functions=list(_FUNCTIONS),
         ),
     ],
