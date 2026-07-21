@@ -13,11 +13,26 @@ dependencies = [
     "py3langid>=0.3",
 ]
 
+[project.scripts]
+# Console entry DuckDB's `vgi` extension can spawn over stdio, and the target of
+# `bin/vgi-translate-worker`. HTTP mode is served via `vgi-serve
+# vgi_translate.worker:TranslateWorker --http` (from the `serve` extra).
+vgi-translate-worker = "vgi_translate.worker:main"
+
+[project.urls]
+Repository = "https://github.com/Query-farm/vgi-translate"
+Issues = "https://github.com/Query-farm/vgi-translate/issues"
+
 [project.optional-dependencies]
 # HTTP transport: the worker can serve over HTTP (`translate_worker.py --http`) in
 # addition to stdio. That path needs vgi-python's `http` extra (waitress).
 # CI's http transport leg installs this via `uv sync --extra http`.
 http = [
+    "vgi-python[http]>=0.16.0",
+]
+# HTTP-serving extra installed by the Docker image (`pip install '.[serve]'`).
+# Alias of `http`: pulls in vgi-python[http] so `vgi-serve ... --http` works.
+serve = [
     "vgi-python[http]>=0.16.0",
 ]
 dev = [
