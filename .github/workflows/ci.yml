@@ -99,7 +99,6 @@ jobs:
       - name: vgi-lint
         uses: Query-farm/vgi-lint-check@v1
         with:
-          version: "0.73.0"
           # Lint the worker via the project venv's Python, NOT `uv run
           # translate_worker.py`: the PEP 723 script env `uv run` builds caches an
           # SDK independently of the synced venv and can emit the pre-0.16 catalog
