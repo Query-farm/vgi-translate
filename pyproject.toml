@@ -8,7 +8,7 @@ license = { file = "LICENSE" }
 authors = [{ name = "Query Farm" }]
 keywords = ["vgi", "duckdb", "translation", "nmt", "argos", "nlp"]
 dependencies = [
-    "vgi-python>=0.16.0",
+    "vgi-python>=0.30.0",
     "argostranslate>=1.9",
     "py3langid>=0.3",
 ]
@@ -28,12 +28,12 @@ Issues = "https://github.com/Query-farm/vgi-translate/issues"
 # addition to stdio. That path needs vgi-python's `http` extra (waitress).
 # CI's http transport leg installs this via `uv sync --extra http`.
 http = [
-    "vgi-python[http]>=0.16.0",
+    "vgi-python[http]>=0.30.0",
 ]
 # HTTP-serving extra installed by the Docker image (`pip install '.[serve]'`).
 # Alias of `http`: pulls in vgi-python[http] so `vgi-serve ... --http` works.
 serve = [
-    "vgi-python[http]>=0.16.0",
+    "vgi-python[http]>=0.30.0",
 ]
 dev = [
     "pytest>=8",
