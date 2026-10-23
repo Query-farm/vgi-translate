@@ -1,9 +1,9 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "vgi-python[http]>=0.16.0",
+#     "vgi-python[http]>=0.46.1",
 #     "argostranslate>=1.9",
-#     "py3langid>=0.3",
+#     "py3langid>=0.4",
 # ]
 # ///
 """Repo-root stdio entry for the vgi-translate worker (thin PEP 723 shim).

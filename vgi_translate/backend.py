@@ -73,7 +73,7 @@ def _langid_identifier() -> Any:
             "language detection requires the 'py3langid' package; install it or "
             "pass an explicit source language (e.g. from := 'en')"
         ) from exc
-    return LanguageIdentifier.from_pickled_model(MODEL_FILE, norm_probs=True)
+    return LanguageIdentifier.from_model_file(MODEL_FILE, norm_probs=True)
 
 
 def detect_language(text: str) -> str:

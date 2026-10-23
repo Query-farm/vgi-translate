@@ -8,9 +8,9 @@ license = { file = "LICENSE" }
 authors = [{ name = "Query Farm" }]
 keywords = ["vgi", "duckdb", "translation", "nmt", "argos", "nlp"]
 dependencies = [
-    "vgi-python>=0.30.0",
+    "vgi-python>=0.46.1",
     "argostranslate>=1.9",
-    "py3langid>=0.3",
+    "py3langid>=0.4",
 ]
 
 [project.scripts]
@@ -28,17 +28,18 @@ Issues = "https://github.com/Query-farm/vgi-translate/issues"
 # addition to stdio. That path needs vgi-python's `http` extra (waitress).
 # CI's http transport leg installs this via `uv sync --extra http`.
 http = [
-    "vgi-python[http]>=0.30.0",
+    "vgi-python[http]>=0.46.1",
 ]
 # HTTP-serving extra installed by the Docker image (`pip install '.[serve]'`).
 # Alias of `http`: pulls in vgi-python[http] so `vgi-serve ... --http` works.
 serve = [
-    "vgi-python[http]>=0.30.0",
+    "vgi-python[http]>=0.46.1",
 ]
 dev = [
     "pytest>=8",
     "ruff>=0.6",
     "mypy>=1.10",
+    "pyarrow-stubs",
     # NOTE: pydoclint is intentionally NOT listed here. It depends on
     # `docstring-parser-fork`, which installs the same top-level `docstring_parser`
     # import package as the real `docstring-parser` that `vgi-rpc` imports at

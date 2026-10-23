@@ -215,7 +215,7 @@ class TranslateAll(TableInOutGenerator[TranslateAllArgs]):
         # Validate that exactly one text column is present (raises otherwise).
         _text_column(input_schema, a.id)
 
-        fields: list[pa.Field] = []
+        fields: list[pa.Field[Any]] = []
         if a.id:
             fields.append(input_schema.field(a.id))
         fields.append(field("text", pa.string(), "The original source text.", nullable=True))

@@ -46,7 +46,9 @@ _FUNCTIONS: list[type] = [*SCALAR_FUNCTIONS, *TABLE_FUNCTIONS]
 _REPO_URL = "https://github.com/Query-farm/vgi-translate"
 
 # VGI152/VGI920 fixed analyst-task suite for `vgi-lint simulate`. Only ``prompt``
-# is shown to the analyst; ``reference_sql`` is the grader-only canonical answer.
+# is shown to the analyst. VGI416: the grader-only fields (``reference_sql``,
+# ``ignore_column_names``) live in the private ``vgi-agent-tests.yaml`` sidecar at
+# the repo root, never in catalog metadata.
 # Language detection is deterministic and offline, so those references are exact
 # ISO 639-1 codes. The translation tasks compare the analyst's answer against the
 # same reference SQL run in the same worker session, so they self-match regardless
@@ -59,8 +61,6 @@ _AGENT_TEST_TASKS = json.dumps(
                 "A user pasted the text 'Bonjour le monde, comment allez-vous ce matin?'. "
                 "Using this worker, return the ISO 639-1 language code it detects for that text."
             ),
-            "reference_sql": "SELECT translate.main.detect_lang('Bonjour le monde, comment allez-vous ce matin?')",
-            "ignore_column_names": True,
         },
         {
             "name": "detect-german",
@@ -68,8 +68,6 @@ _AGENT_TEST_TASKS = json.dumps(
                 "Identify the language of the sentence 'Guten Morgen, wie geht es Ihnen heute?' "
                 "and return its ISO 639-1 code using this worker."
             ),
-            "reference_sql": "SELECT translate.main.detect_lang('Guten Morgen, wie geht es Ihnen heute?')",
-            "ignore_column_names": True,
         },
         {
             "name": "detect-spanish",
@@ -77,8 +75,6 @@ _AGENT_TEST_TASKS = json.dumps(
                 "What ISO 639-1 language code does this worker report for the text "
                 "'Hola, mucho gusto en conocerte.'? Return a single value."
             ),
-            "reference_sql": "SELECT translate.main.detect_lang('Hola, mucho gusto en conocerte.')",
-            "ignore_column_names": True,
         },
         {
             "name": "translate-english-to-spanish",
@@ -86,10 +82,6 @@ _AGENT_TEST_TASKS = json.dumps(
                 "Translate the English sentence 'The quick brown fox jumps over the lazy dog.' "
                 "into Spanish using this worker. The source language is English."
             ),
-            "reference_sql": (
-                "SELECT translate.main.translate('The quick brown fox jumps over the lazy dog.', 'es', 'en')"
-            ),
-            "ignore_column_names": True,
         },
         {
             "name": "translate-table-batch",
@@ -98,13 +90,6 @@ _AGENT_TEST_TASKS = json.dumps(
                 "id 1 and body 'Hello, world.' from English into Spanish, keeping the id column "
                 "in the output."
             ),
-            "reference_sql": (
-                "SELECT * FROM translate.main.translate_all("
-                "(SELECT 1 AS id, 'Hello, world.' AS body), "
-                "id := 'id', target := 'es', source := 'en')"
-            ),
-            "ignore_column_names": True,
-            "unordered": True,
         },
         {
             "name": "lookup-language-code",
@@ -112,8 +97,6 @@ _AGENT_TEST_TASKS = json.dumps(
                 "Using this worker, what ISO 639-1 language code does it list for the "
                 "language whose English name is 'Spanish'? Return a single value."
             ),
-            "reference_sql": "SELECT code FROM translate.main.languages WHERE name = 'Spanish'",
-            "ignore_column_names": True,
         },
     ]
 )
@@ -201,7 +184,7 @@ _TRANSLATE_CATALOG = Catalog(
     source_url=_REPO_URL,
     schemas=[
         Schema(
-            name="main",
+            path=["main"],
             comment="Local neural machine translation and language detection for SQL.",
             tags={
                 "vgi.title": "Translate — main",

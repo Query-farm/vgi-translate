@@ -51,6 +51,7 @@ def _detect(client: Client, texts: list[str | None]) -> list[str | None]:
     results = list(
         client.scalar_function(
             function_name="detect_lang",
+            schema_path=["main"],
             input=iter([batch]),
             arguments=Arguments(positional=[pa.scalar("text")]),
         )
@@ -92,6 +93,7 @@ class TestTranslateScalar:
             results = list(
                 client.scalar_function(
                     function_name="translate",
+                    schema_path=["main"],
                     input=iter([batch]),
                     # The `text` column is supplied by the input batch (a Param);
                     # only the constant args go in `positional`: to_lang, from_lang.
@@ -113,6 +115,7 @@ class TestTranslateScalar:
             results = list(
                 client.scalar_function(
                     function_name="translate",
+                    schema_path=["main"],
                     input=iter([batch]),
                     # Only to_lang given -> from_lang defaults to 'auto' (detected as 'en').
                     arguments=Arguments(positional=[pa.scalar("es")]),
@@ -127,6 +130,7 @@ def _translate(client: Client, texts: list[str | None], *, positional: list[obje
     results = list(
         client.scalar_function(
             function_name="translate",
+            schema_path=["main"],
             input=iter([batch]),
             arguments=Arguments(positional=[pa.scalar(p) for p in positional]),
         )
@@ -173,6 +177,7 @@ class TestTranslateAll:
             results = list(
                 client.table_in_out_function(
                     function_name="translate_all",
+                    schema_path=["main"],
                     input=iter([batch]),
                     # The table input is the streamed `input`; only named args
                     # go in `arguments`.

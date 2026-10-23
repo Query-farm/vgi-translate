@@ -1,0 +1,23 @@
+# Private graders for `vgi-lint simulate` (VGI416). The worker publishes only
+# task names and prompts in vgi.agent_test_tasks; these canonical solutions stay
+# in the repo and are never exposed in catalog metadata.
+tasks:
+  - name: detect-french
+    reference_sql: "SELECT translate.main.detect_lang('Bonjour le monde, comment allez-vous ce matin?')"
+    ignore_column_names: true
+  - name: detect-german
+    reference_sql: "SELECT translate.main.detect_lang('Guten Morgen, wie geht es Ihnen heute?')"
+    ignore_column_names: true
+  - name: detect-spanish
+    reference_sql: "SELECT translate.main.detect_lang('Hola, mucho gusto en conocerte.')"
+    ignore_column_names: true
+  - name: translate-english-to-spanish
+    reference_sql: "SELECT translate.main.translate('The quick brown fox jumps over the lazy dog.', 'es', 'en')"
+    ignore_column_names: true
+  - name: translate-table-batch
+    reference_sql: "SELECT * FROM translate.main.translate_all((SELECT 1 AS id, 'Hello, world.' AS body), id := 'id', target := 'es', source := 'en')"
+    ignore_column_names: true
+    unordered: true
+  - name: lookup-language-code
+    reference_sql: "SELECT code FROM translate.main.languages WHERE name = 'Spanish'"
+    ignore_column_names: true
