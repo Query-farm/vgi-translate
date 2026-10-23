@@ -38,7 +38,7 @@ test-offline:
 ensure-haybarn:
 	@if ! PATH="$(LOCAL_BIN):$$PATH" command -v $(HAYBARN) >/dev/null 2>&1; then \
 		echo "Installing haybarn-unittest..."; \
-		uv tool install haybarn-unittest; \
+		uv tool install 'haybarn-unittest<2'; \
 	fi
 
 # Pre-install the Argos en->es package so the real-translation E2E tests pass.
