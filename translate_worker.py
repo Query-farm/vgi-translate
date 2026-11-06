@@ -1,7 +1,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "vgi-python[http]>=0.46.1",
+#     "vgi-python[http]>=0.49.0",
 #     "argostranslate>=1.9",
 #     "py3langid>=0.4",
 # ]

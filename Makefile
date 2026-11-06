@@ -38,7 +38,7 @@ test-offline:
 ensure-haybarn:
 	@if ! PATH="$(LOCAL_BIN):$$PATH" command -v $(HAYBARN) >/dev/null 2>&1; then \
 		echo "Installing haybarn-unittest..."; \
-		uv tool install 'haybarn-unittest<2'; \
+		uv tool install --prerelease allow 'haybarn-unittest>=2.0.0rc11,<2.1'; \
 	fi
 
 # Pre-install the Argos en->es package so the real-translation E2E tests pass.
@@ -51,7 +51,7 @@ ensure-en-es:
 # explicit `LOAD vgi;` instead.
 test-sql: ensure-haybarn ensure-en-es
 	PATH="$(LOCAL_BIN):$$PATH" VGI_TRANSLATE_WORKER="$(VGI_TRANSLATE_WORKER)" \
-		$(HAYBARN) --test-dir "$(TEST_DIR)" "$(TEST_PATTERN)"
+		$(HAYBARN) --keep-home --test-dir "$(TEST_DIR)" "$(TEST_PATTERN)"
 
 lint:
 	uv run ruff check .

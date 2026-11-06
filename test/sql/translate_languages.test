@@ -10,7 +10,7 @@ statement ok
 LOAD vgi;
 
 statement ok
-ATTACH 'translate' AS tr (TYPE vgi, LOCATION '${VGI_TRANSLATE_WORKER}');
+ATTACH 'translate' AS tr (TYPE vgi, LOCATION '{VGI_TRANSLATE_WORKER}');
 
 # ============================================================================
 # languages view — browsable reference of ISO 639-1 codes

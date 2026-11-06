@@ -182,7 +182,7 @@ source==target, missing target) always run — they need no downloads.
 
 **End-to-end SQL tests** (`test/sql/*.test`) run the worker under DuckDB through
 the [`haybarn-unittest`](https://pypi.org/project/haybarn-unittest/)
-sqllogictest runner (`uv tool install haybarn-unittest`). `make test-sql`
+sqllogictest runner (`uv tool install --prerelease allow 'haybarn-unittest>=2.0.0rc11,<2.1'`). `make test-sql`
 installs the runner and the Argos `en→es` package, then exercises `detect_lang`,
 both `translate` overloads, `translate_all` (id passthrough + `src_lang`), and
 clear-error cases for unknown language codes — against the actual SQL surface.
