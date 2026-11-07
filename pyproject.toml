@@ -1,6 +1,6 @@
 [project]
 name = "vgi-translate"
-version = "0.1.0"
+version = "0.2.0"
 description = "A VGI worker bringing local neural machine translation and language detection into DuckDB/SQL"
 readme = "README.md"
 requires-python = ">=3.13"
