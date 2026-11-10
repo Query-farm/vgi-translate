@@ -106,7 +106,8 @@ _TRANSLATE_CATALOG = Catalog(
     default_schema="main",
     comment="Local neural machine translation and language detection for DuckDB/SQL.",
     tags={
-        "vgi.title": "Local Machine Translation & Language Detection",
+        "vgi.title": "Local Translation",
+        "vgi.subtitle": "Translate text and detect its language offline with local neural models.",
         "vgi.keywords": json.dumps(
             [
                 "translate",
@@ -187,7 +188,7 @@ _TRANSLATE_CATALOG = Catalog(
             path=["main"],
             comment="Local neural machine translation and language detection for SQL.",
             tags={
-                "vgi.title": "Translate — main",
+                "vgi.title": "Translation Functions",
                 "vgi.keywords": json.dumps(
                     [
                         "translate",
