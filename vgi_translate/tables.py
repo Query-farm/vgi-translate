@@ -35,6 +35,7 @@ from vgi.table_in_out_function import TableInOutGenerator
 from vgi_rpc.rpc import OutputCollector
 
 from .backend import AUTO, get_backend, normalize_lang
+from .composed import TRANSLATE_ALL_NAMED_SOURCE
 from .meta import object_tags
 from .schema_utils import field
 
@@ -53,7 +54,8 @@ _TRANSLATE_ALL_EXAMPLE_QUERIES = json.dumps(
                 "(SELECT 1 AS id, 'The quick brown fox jumps over the lazy dog.' AS body), "
                 "id := 'id', target := 'es', source := 'en')"
             ),
-        }
+        },
+        TRANSLATE_ALL_NAMED_SOURCE,
     ]
 )
 
@@ -117,7 +119,11 @@ class TranslateAll(TableInOutGenerator[TranslateAllArgs]):
                     "id := 'id', target := 'es', source := 'en')"
                 ),
                 description="Translate a table of rows from English to Spanish in batch, carrying the id through",
-            )
+            ),
+            FunctionExample(
+                sql=TRANSLATE_ALL_NAMED_SOURCE["sql"],
+                description=TRANSLATE_ALL_NAMED_SOURCE["description"],
+            ),
         ]
         tags = {
             **object_tags(

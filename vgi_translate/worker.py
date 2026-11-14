@@ -37,6 +37,7 @@ import json
 from vgi import Worker
 from vgi.catalog import Catalog, Schema
 
+from vgi_translate.composed import COMPOSED_EXAMPLES
 from vgi_translate.languages import LANGUAGES_VIEW
 from vgi_translate.scalars import SCALAR_FUNCTIONS
 from vgi_translate.tables import TABLE_FUNCTIONS
@@ -96,6 +97,27 @@ _AGENT_TEST_TASKS = json.dumps(
             "prompt": (
                 "Using this worker, what ISO 639-1 language code does it list for the "
                 "language whose English name is 'Spanish'? Return a single value."
+            ),
+        },
+        {
+            "name": "translate-then-detect-output",
+            "prompt": (
+                "Translate the English sentence 'The weather is beautiful today.' into Spanish "
+                "with this worker, then run this worker's language detector on that Spanish "
+                "translation (not on the original). Return a single VARCHAR value: the ISO 639-1 "
+                "code detected for the translation."
+            ),
+        },
+        {
+            "name": "count-phrases-by-language-name",
+            "prompt": (
+                "Using this worker, detect the language of each of these four phrases: "
+                "'Bonjour le monde', 'Merci beaucoup pour votre aide.', "
+                "'Guten Morgen, wie geht es Ihnen heute?' and 'Hola, mucho gusto en conocerte.'. "
+                "Report how many phrases were detected in each language, labelling each language "
+                "with its English name as listed by this worker's language reference. Return two "
+                "columns, one row per language: the English language name (VARCHAR) and the "
+                "number of phrases (BIGINT)."
             ),
         },
     ]
@@ -276,6 +298,7 @@ _TRANSLATE_CATALOG = Catalog(
                             "description": "Look up the ISO 639-1 code for a language by its English name.",
                             "sql": "SELECT code FROM translate.main.languages WHERE name = 'Spanish'",
                         },
+                        *COMPOSED_EXAMPLES,
                     ]
                 ),
             },

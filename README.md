@@ -103,6 +103,7 @@ The worker code itself is under the
 | **Translate one value/column** | `tr.translate(text, 'es')` | scalar function |
 | **Detect a language** | `tr.detect_lang(text)` | scalar function |
 | **Translate a whole table (batched)** | `tr.translate_all((SELECT id, text), id := 'id', target := 'es')` | table-in-out function |
+| **Look up language codes** | `tr.languages` | view |
 
 **Conventions:**
 
@@ -168,6 +169,23 @@ SELECT m.*, t.translation, t.src_lang
 FROM messages m
 JOIN tr.translate_all((SELECT id, body FROM messages), id := 'id', target := 'en') t
   USING (id);
+```
+
+### `languages` → `(code, name)`  *(view)*
+
+A browsable reference of common ISO 639-1 codes and their English names — the
+values to pass as `target`/`source`, and a label for `detect_lang` /
+`src_lang` results. It is representative, not exhaustive; whether a given pair
+has an installable package is resolved at translate time.
+
+```sql
+SELECT code FROM tr.languages WHERE name = 'Spanish';   -- 'es'
+
+-- normalize mixed-language rows to English, naming each row's detected source
+SELECT t.id, l.name AS source_language, t.translation
+FROM tr.translate_all((SELECT id, body FROM messages), id := 'id', target := 'en') t
+LEFT JOIN tr.languages l ON l.code = t.src_lang
+ORDER BY t.id;
 ```
 
 ## Backends & configuration

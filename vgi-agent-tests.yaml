@@ -21,3 +21,10 @@ tasks:
   - name: lookup-language-code
     reference_sql: "SELECT code FROM translate.main.languages WHERE name = 'Spanish'"
     ignore_column_names: true
+  - name: translate-then-detect-output
+    reference_sql: "SELECT translate.main.detect_lang(translate.main.translate('The weather is beautiful today.', 'es', 'en'))"
+    ignore_column_names: true
+  - name: count-phrases-by-language-name
+    reference_sql: "SELECT l.name, count(*) AS n FROM (VALUES ('Bonjour le monde'), ('Merci beaucoup pour votre aide.'), ('Guten Morgen, wie geht es Ihnen heute?'), ('Hola, mucho gusto en conocerte.')) AS p(phrase) JOIN translate.main.languages AS l ON l.code = translate.main.detect_lang(p.phrase) GROUP BY l.name ORDER BY l.name"
+    ignore_column_names: true
+    unordered: true

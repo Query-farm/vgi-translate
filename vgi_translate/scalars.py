@@ -36,6 +36,7 @@ from vgi.metadata import FunctionExample
 from vgi.scalar_function import ScalarFunction
 
 from .backend import detect_language, get_backend
+from .composed import DETECT_AND_NAME, TRANSLATE_DETECTED_SPANISH
 from .meta import object_tags
 
 # VGI509 executable examples: self-contained, catalog-qualified SQL the linter
@@ -74,6 +75,7 @@ _TRANSLATE_EXAMPLE_QUERIES = json.dumps(
             "description": "Translate a Spanish string into English with an explicit source language.",
             "sql": "SELECT translate.main.translate('Hola, mundo.', 'en', 'es')",
         },
+        TRANSLATE_DETECTED_SPANISH,
     ]
 )
 
@@ -87,8 +89,13 @@ _DETECT_EXAMPLE_QUERIES = json.dumps(
             "description": "Detect the language of a German greeting (returns 'de').",
             "sql": "SELECT translate.main.detect_lang('Guten Morgen')",
         },
+        DETECT_AND_NAME,
     ]
 )
+
+# The composed detect_lang -> languages example is offline and deterministic, so
+# it is also guaranteed-runnable (VGI509).
+_DETECT_EXECUTABLE_EXAMPLES = json.dumps([DETECT_AND_NAME], indent=2)
 
 
 def _translate_column(text: pa.StringArray, *, to_code: str, from_code: str) -> pa.StringArray:
@@ -195,8 +202,8 @@ class TranslateAuto(ScalarFunction):
 class Translate(ScalarFunction):
     """``translate(text, to_lang, from_lang)`` — translate with an explicit source.
 
-    Pass ``from_lang := 'auto'`` (or use the 2-arg overload) to detect the
-    source language per row. Uses the configured backend (Argos Translate by
+    Pass ``'auto'`` as the third (positional) argument, or use the 2-arg
+    overload, to detect the source language per row. Uses the configured backend (Argos Translate by
     default).
     """
 
@@ -210,6 +217,10 @@ class Translate(ScalarFunction):
             FunctionExample(
                 sql="SELECT translate.main.translate('Hola, mundo.', 'en', 'es')",
                 description="Translate a known-Spanish string into English (returns 'Hello, world.')",
+            ),
+            FunctionExample(
+                sql=TRANSLATE_DETECTED_SPANISH["sql"],
+                description=TRANSLATE_DETECTED_SPANISH["description"],
             ),
         ]
         tags = {
@@ -229,7 +240,8 @@ class Translate(ScalarFunction):
                     "**Output**: `VARCHAR` translated text.\n\n"
                     "**When to use**: prefer this overload when the source language is known "
                     "(skips detection and avoids mis-detection on short strings). Pass "
-                    "`source := 'auto'` to fall back to detection. For large tables use the "
+                    "`'auto'` as the third argument to fall back to detection (scalar "
+                    "arguments are positional; `source := 'auto'` does not bind). For large tables use the "
                     "`translate_all` table function instead.\n\n"
                     "**Behavior & edge cases**: the first call for a language pair lazily "
                     "installs and caches the Argos package; subsequent calls are offline."
@@ -244,8 +256,8 @@ class Translate(ScalarFunction):
                     "SELECT translate.main.translate('Hola, mundo.', 'en', 'es'); -- Hello, world.\n"
                     "```\n\n"
                     "### Notes\n\n"
-                    "- `source` / `target` are ISO 639-1 codes; pass `source := 'auto'` to "
-                    "detect instead.\n"
+                    "- `source` / `target` are ISO 639-1 codes; pass `'auto'` as the third "
+                    "argument to detect instead (arguments are positional).\n"
                     "- `NULL` input yields `NULL`."
                 ),
                 keywords=[
@@ -299,6 +311,10 @@ class DetectLang(ScalarFunction):
                 sql="SELECT translate.main.detect_lang('Guten Morgen')",
                 description="Detect the language of a German greeting (returns 'de')",
             ),
+            FunctionExample(
+                sql=DETECT_AND_NAME["sql"],
+                description=DETECT_AND_NAME["description"],
+            ),
         ]
         tags = {
             **object_tags(
@@ -349,6 +365,7 @@ class DetectLang(ScalarFunction):
             ),
             "vgi.category": "language-detection",
             "vgi.example_queries": _DETECT_EXAMPLE_QUERIES,
+            "vgi.executable_examples": _DETECT_EXECUTABLE_EXAMPLES,
         }
 
     @classmethod

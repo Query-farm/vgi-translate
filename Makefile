@@ -41,10 +41,13 @@ ensure-haybarn:
 		uv tool install --prerelease allow 'haybarn-unittest>=2.0.0rc11,<2.1'; \
 	fi
 
-# Pre-install the Argos en->es package so the real-translation E2E tests pass.
+# Pre-install the Argos en->es (and es->en, used by the composed examples)
+# packages so the real-translation E2E tests pass.
 ensure-en-es:
 	@uv run python scripts/ensure_argos_pair.py en es \
 		|| echo 'WARNING: could not install Argos en->es (offline?); real-translation E2E tests may fail'
+	@uv run python scripts/ensure_argos_pair.py es en \
+		|| echo 'WARNING: could not install Argos es->en (offline?); composed E2E tests may fail'
 
 # End-to-end SQL tests: load `vgi`, ATTACH the worker, run the .test glob.
 # CRITICAL: under haybarn-unittest, `require vgi` SKIPS — the .test files use an

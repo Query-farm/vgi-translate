@@ -1,0 +1,49 @@
+# name: test/sql/translate_composed.test
+# description: Composed examples — detect_lang/translate/translate_all combined with the languages view
+# group: [vgi_translate]
+#
+# Mirrors the composed example queries published in metadata (vgi_translate/composed.py).
+# detect_lang + languages is offline; the translation cases need the Argos es->en
+# package (the Makefile `test-sql` target pre-installs it). Translation text is
+# model-dependent, so those cases assert structure rather than exact wording.
+
+require-env VGI_TRANSLATE_WORKER
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'translate' (TYPE vgi, LOCATION '{VGI_TRANSLATE_WORKER}');
+
+# detect_lang -> languages: label each detected code with its English name.
+query III
+WITH detected AS (SELECT id, body, translate.main.detect_lang(body) AS code FROM (VALUES (1, 'Bonjour le monde, comment allez-vous ce matin?'), (2, 'Guten Morgen, wie geht es Ihnen heute?'), (3, 'Hola, mucho gusto en conocerte.'), (4, 'The weather is lovely today.')) AS messages(id, body)) SELECT d.id, d.code, l.name AS language FROM detected AS d LEFT JOIN translate.main.languages AS l ON l.code = d.code ORDER BY d.id
+----
+1	fr	French
+2	de	German
+3	es	Spanish
+4	en	English
+
+# detect_lang filter -> translate: only the Spanish reviews survive, translated to English.
+query IIII
+SELECT id, english <> body, translate.main.detect_lang(english), length(english) > 0 FROM (SELECT id, body, translate.main.translate(body, 'en', 'es') AS english FROM (VALUES (1, 'El envío llegó tarde y la caja estaba dañada.'), (2, 'Great product, works as described.'), (3, 'Muy buena calidad, lo recomiendo.')) AS reviews(id, body) WHERE translate.main.detect_lang(body) = 'es') ORDER BY id
+----
+1	true	en	true
+3	true	en	true
+
+# translate_all (auto source) -> languages: Spanish rows translated, English row passes through.
+query IIII
+SELECT t.id, l.name AS source_language, t.translation = t.text, translate.main.detect_lang(t.translation) FROM translate.main.translate_all((SELECT id, body FROM (VALUES (1, 'El envío llegó tarde y la caja estaba dañada.'), (2, 'Great product, works as described.'), (3, 'Muy buena calidad, lo recomiendo.')) AS reviews(id, body)), id := 'id', target := 'en', source := 'auto') AS t LEFT JOIN translate.main.languages AS l ON l.code = t.src_lang ORDER BY t.id
+----
+1	Spanish	false	en
+2	English	true	en
+3	Spanish	false	en
+
+# Scalar arguments are positional: the named form documented for translate_all does not bind.
+statement error
+SELECT translate.main.translate('Hola, mundo.', 'en', source := 'auto')
+----
+No function matches
+
+statement ok
+DETACH translate;

@@ -163,10 +163,13 @@ jobs:
       - name: Install the worker (from the lockfile)
         run: uv sync --frozen --python 3.13 --extra http
 
-      # The real-translation E2E cases need the Argos en->es package in the user
+      # The real-translation E2E cases need the Argos en->es (and, for the composed
+      # examples, es->en) packages in the user
       # data home. detect_lang E2E is offline and always runs.
-      - name: Pre-install Argos en->es package
-        run: uv run --python 3.13 python scripts/ensure_argos_pair.py en es
+      - name: Pre-install Argos en->es and es->en packages
+        run: |
+          uv run --python 3.13 python scripts/ensure_argos_pair.py en es
+          uv run --python 3.13 python scripts/ensure_argos_pair.py es en
 
       - name: Download haybarn-unittest
         run: |
