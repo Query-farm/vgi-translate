@@ -5,7 +5,10 @@ from __future__ import annotations
 import pytest
 
 from vgi_translate.backend import (
+    DEFAULT_COMPUTE_TYPE,
+    ArgosBackend,
     TranslationError,
+    _argos_pair_available,
     detect_language,
     get_backend,
     normalize_lang,
@@ -69,6 +72,47 @@ class TestBackendSelection:
         with pytest.raises(TranslationError, match="unknown backend"):
             get_backend()
         get_backend.cache_clear()
+
+
+class TestArgosComputeType:
+    """Regression: Argos's "auto" compute type is int8 on x86-64 Linux, where the
+    int8 es->en 1.9 model emits repeated subword garbage. The backend pins float32
+    unless the deployer explicitly chose a compute type."""
+
+    def test_defaults_to_float32(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        import argostranslate.settings as argos_settings
+
+        monkeypatch.delenv("ARGOS_COMPUTE_TYPE", raising=False)
+        monkeypatch.setattr(argos_settings, "load_settings_dict", lambda: {})
+        monkeypatch.setattr(argos_settings, "compute_type", "auto")
+        ArgosBackend()
+        assert DEFAULT_COMPUTE_TYPE == "float32"
+        assert argos_settings.compute_type == "float32"
+
+    def test_explicit_env_is_respected(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        import argostranslate.settings as argos_settings
+
+        monkeypatch.setenv("ARGOS_COMPUTE_TYPE", "int8")
+        monkeypatch.setattr(argos_settings, "compute_type", "int8")
+        ArgosBackend()
+        assert argos_settings.compute_type == "int8"
+
+    def test_settings_file_is_respected(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        import argostranslate.settings as argos_settings
+
+        monkeypatch.delenv("ARGOS_COMPUTE_TYPE", raising=False)
+        monkeypatch.setattr(argos_settings, "load_settings_dict", lambda: {"ARGOS_COMPUTE_TYPE": "int8"})
+        monkeypatch.setattr(argos_settings, "compute_type", "int8")
+        ArgosBackend()
+        assert argos_settings.compute_type == "int8"
+
+    @pytest.mark.download
+    def test_es_to_en_is_english(self) -> None:
+        if not _argos_pair_available("es", "en"):
+            pytest.skip("Argos es->en package not installed")
+        out = ArgosBackend().translate("Muy buena calidad, lo recomiendo.", to_code="en", from_code="es")
+        assert detect_language(out) == "en"
+        assert len(out) < 100
 
 
 class TestResolveSource:

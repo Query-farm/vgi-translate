@@ -126,6 +126,34 @@ def _argos_pair_available(from_code: str, to_code: str) -> bool:
         return False
 
 
+# CTranslate2 compute type used when the deployer has not chosen one. Argos's own
+# default is "auto", which on x86-64 Linux resolves to int8 inference — and the
+# int8-quantized Argos es->en 1.9 package degenerates there into repeated
+# subword garbage ("mainstremainstre...") while the same model is correct on
+# Apple Silicon. float32 is correct on every platform, so it is the default;
+# set ARGOS_COMPUTE_TYPE (env or Argos settings.json) to opt back into int8.
+DEFAULT_COMPUTE_TYPE = "float32"
+
+
+def _configure_argos_compute_type() -> str:
+    """Pin Argos's CTranslate2 compute type unless the deployer chose one.
+
+    Argos reads ``ARGOS_COMPUTE_TYPE`` at import into ``settings.compute_type``
+    and passes it to every ``ctranslate2.Translator`` it builds lazily, so
+    overriding the module attribute before the first translation is enough.
+
+    Returns:
+        The compute type Argos will use.
+    """
+    import argostranslate.settings as argos_settings
+
+    explicit = os.getenv("ARGOS_COMPUTE_TYPE") or argos_settings.load_settings_dict().get("ARGOS_COMPUTE_TYPE")
+    if not explicit:
+        argos_settings.compute_type = DEFAULT_COMPUTE_TYPE
+    compute_type: str = argos_settings.compute_type
+    return compute_type
+
+
 class ArgosBackend(Backend):
     """Argos Translate backend (MIT). Lazily installs + caches OPUS-MT packages."""
 
@@ -137,6 +165,7 @@ class ArgosBackend(Backend):
         self._lock = threading.Lock()
         self._installed: set[tuple[str, str]] = set()
         self._index_updated = False
+        _configure_argos_compute_type()
 
     def _ensure_pair(self, from_code: str, to_code: str) -> None:
         """Ensure the ``from_code -> to_code`` package is installed (idempotent)."""
