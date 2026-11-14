@@ -274,3 +274,6 @@ Written by [Query.Farm](https://query.farm).
 
 Copyright 2026 Query Farm LLC - https://query.farm
 
+## Executed notebooks
+
+See the [translation notebook walkthrough](notebooks/README.md) for language routing, row preservation and review thresholds.

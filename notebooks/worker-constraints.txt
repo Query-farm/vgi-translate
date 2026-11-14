@@ -1,0 +1,10 @@
+vgi-python==0.51.0
+vgi-rpc==0.53.1
+pyarrow==26.0.1
+argostranslate==1.11.0
+ctranslate2==4.8.5
+py3langid==0.4.0
+numpy==2.5.4
+stanza==1.10.1
+torch==2.15.0
+sentencepiece==0.2.3

@@ -1,0 +1,49 @@
+{
+  "url": "https://argos-net.com/v1/translate-es_en-1_9.argosmodel",
+  "sha256": "c54df2b62fceaf54a3ce5d97db6bf56efd7940063329f6778f4212d2acb370d4",
+  "bytes": 285208831,
+  "package": "translate-es_en-1_9",
+  "files": {
+    "translate-es_en-1_9/bpe.model": "567708133d5a722ac57c1431f9490904d9bcacd85134778e34ca2f901855855e",
+    "translate-es_en-1_9/README.md": "ca784d58b3fe81e557774db5ae33c4278bd6cfe64a43a6aa7301cce062b201c6",
+    "translate-es_en-1_9/metadata.json": "976bb0aafb1142b7f2936ed2becad224b47aef619685fb8b17faab81080cc725",
+    "translate-es_en-1_9/stanza/resources.json": "39faaee80e6cca9e211dcda8fb3da4f9c024dcff5b4bfc9832a8e0e271db2fda",
+    "translate-es_en-1_9/stanza/es/tokenize/ancora.pt": "87cee58fcfa96e169124e8a4ebdf8d5ac339e4e46eeea21358038a5e6dd9f8ff",
+    "translate-es_en-1_9/model/shared_vocabulary.json": "8ba15845314c1291fad86b0bf52b4a8a5db2a2f01b898c8c44d9e21e896a041f",
+    "translate-es_en-1_9/model/model.bin": "3c634f2fbfce11ba9c3db839db50079c08d3cdb12c74f2c21671f742dbbb30f1",
+    "translate-es_en-1_9/model/config.json": "152eb448f1020eb55f90971d7b95f61896abee8415d555ca51ae7897ac0a0e68"
+  },
+  "attribution": "# Castilian - English version 1.0\n\nAuthors: J\u00f6rg Tiedemann and Santhosh Thottingal\nTitle: \"OPUS-MT \u2014 Building open translation services for the World\"\nBook Title: Proceedings of the 22nd Annual Conference of the European Association for Machine Translation (EAMT)\nYear: 2020\nLocation: Lisbon, Portugal\n\nThe original OPUS model from which this packaged model is derived is licensed CC-BY 4.0\n",
+  "runtime_assets": [
+    {
+      "path": "translate-es_en-1_9/stanza/resources.json",
+      "url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/6c91e03e9281e297a6d7a7d0649a6c7b642058da/resources_1.10.0.json",
+      "sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+      "bytes": 434061
+    },
+    {
+      "path": "translate-es_en-1_9/stanza/es/tokenize/combined.pt",
+      "url": "https://huggingface.co/stanfordnlp/stanza-es/resolve/v1.10.0/models/tokenize/combined.pt",
+      "sha256": "39343c9c4d4d9c6533ced1201d172e4ce47d3f757ee4f7f0bb248d54e484d6ba",
+      "bytes": 664204
+    },
+    {
+      "path": "translate-es_en-1_9/stanza/es/mwt/combined.pt",
+      "url": "https://huggingface.co/stanfordnlp/stanza-es/resolve/v1.10.0/models/mwt/combined.pt",
+      "sha256": "3e930b89ba7e2d17d894658edffff7a513e76ac32a2f04bd83e12d8a2e4e070c",
+      "bytes": 634165
+    }
+  ],
+  "runtime_files": {
+    "translate-es_en-1_9/bpe.model": "567708133d5a722ac57c1431f9490904d9bcacd85134778e34ca2f901855855e",
+    "translate-es_en-1_9/README.md": "ca784d58b3fe81e557774db5ae33c4278bd6cfe64a43a6aa7301cce062b201c6",
+    "translate-es_en-1_9/metadata.json": "976bb0aafb1142b7f2936ed2becad224b47aef619685fb8b17faab81080cc725",
+    "translate-es_en-1_9/stanza/resources.json": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+    "translate-es_en-1_9/stanza/es/tokenize/ancora.pt": "87cee58fcfa96e169124e8a4ebdf8d5ac339e4e46eeea21358038a5e6dd9f8ff",
+    "translate-es_en-1_9/model/shared_vocabulary.json": "8ba15845314c1291fad86b0bf52b4a8a5db2a2f01b898c8c44d9e21e896a041f",
+    "translate-es_en-1_9/model/model.bin": "3c634f2fbfce11ba9c3db839db50079c08d3cdb12c74f2c21671f742dbbb30f1",
+    "translate-es_en-1_9/model/config.json": "152eb448f1020eb55f90971d7b95f61896abee8415d555ca51ae7897ac0a0e68",
+    "translate-es_en-1_9/stanza/es/tokenize/combined.pt": "39343c9c4d4d9c6533ced1201d172e4ce47d3f757ee4f7f0bb248d54e484d6ba",
+    "translate-es_en-1_9/stanza/es/mwt/combined.pt": "3e930b89ba7e2d17d894658edffff7a513e76ac32a2f04bd83e12d8a2e4e070c"
+  }
+}
