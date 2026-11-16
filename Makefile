@@ -1,61 +1,61 @@
-# vgi-translate — test targets.
+# vgi-translate — dev and test targets. `make help` lists them.
 #
-# Usage:
-#   make test         # unit tests + SQL (end-to-end) tests
+#   make test         # unit tests + SQL (end-to-end) tests over stdio, launch and http
 #   make test-unit    # pytest unit/integration suite
 #   make test-offline # pytest with download-gated tests skipped (offline-safe)
-#   make test-sql     # DuckDB sqllogictest E2E via haybarn-unittest
+#   make test-sql     # test/sql/*.test through DuckDB via ci/run-integration.sh
 #   make lint         # ruff + mypy
 #
-# The SQL E2E suite drives the *real* worker as a DuckDB subprocess through the
-# haybarn-unittest sqllogictest runner. It is self-contained: `test-sql`
-# installs the runner and the Argos en->es language package if they are missing.
+# The SQL suite drives the *real* worker through the haybarn-unittest runner. It
+# is self-contained: `test-sql` installs the runner and the Argos en->es / es->en
+# language packages if they are missing.
 
-# The worker command DuckDB runs for the `vgi` extension's ATTACH.
-VGI_TRANSLATE_WORKER ?= uv run --python 3.14 translate_worker.py
+HAYBARN_VERSION  ?= 2.0.0rc11
+WORKER           := $(CURDIR)/.venv/bin/vgi-translate-worker
+TOOLS            := $(CURDIR)/.tools
+HAYBARN_UNITTEST := $(TOOLS)/bin/haybarn-unittest
+TRANSPORTS       ?= stdio launch http
 
-# haybarn-unittest is a uv tool; ~/.local/bin must be on PATH to find it.
-HAYBARN ?= haybarn-unittest
-LOCAL_BIN := $(HOME)/.local/bin
+build: ## Install the worker (all extras: HTTP serving needs `http`) into .venv
+	uv sync --locked --all-extras
 
-TEST_DIR     = .
-TEST_PATTERN = test/sql/*
+tools: ## Install the pinned SQL test runner into .tools
+	@test -x $(HAYBARN_UNITTEST) || { uv venv -q $(TOOLS) && uv pip install -q -p $(TOOLS) haybarn-unittest==$(HAYBARN_VERSION); }
 
-.PHONY: test test-unit test-offline test-sql lint ensure-haybarn ensure-en-es
+test-sql: build tools ensure-en-es ## SQL tests through DuckDB over each transport: make test-sql TRANSPORTS=launch
+	@set -e; for t in $(TRANSPORTS); do \
+	  WORKER=$(WORKER) HAYBARN_UNITTEST=$(HAYBARN_UNITTEST) TRANSPORT=$$t ci/run-integration.sh; \
+	done
 
-test: test-unit test-sql
+test-sql-all: test-sql ## Alias: SQL tests over every transport
+
+.DEFAULT_GOAL := help
+.PHONY: help build tools test test-unit test-offline test-sql test-sql-all lint check ensure-en-es
+
+help: ## List the targets
+	@awk 'BEGIN{FS=":.*## "} /^[a-zA-Z_-]+:.*## /{printf "  %-14s %s\n",$$1,$$2}' $(MAKEFILE_LIST)
+
+test: test-unit test-sql ## Unit + SQL tests
+
+check: lint test ## Lint + unit + SQL tests
 
 # Full unit suite (the en->es download test self-skips if the package can't be
 # installed, so this stays green offline).
-test-unit:
+test-unit: build ## Unit tests (pytest)
 	uv run pytest -q
 
 # Offline-safe subset: skip every download-gated test outright.
-test-offline:
+test-offline: ## Unit tests with download-gated tests skipped
 	uv run pytest -q -m "not download"
-
-# Install the haybarn-unittest sqllogictest runner if it isn't already present.
-ensure-haybarn:
-	@if ! PATH="$(LOCAL_BIN):$$PATH" command -v $(HAYBARN) >/dev/null 2>&1; then \
-		echo "Installing haybarn-unittest..."; \
-		uv tool install --prerelease allow 'haybarn-unittest>=2.0.0rc11,<2.1'; \
-	fi
 
 # Pre-install the Argos en->es (and es->en, used by the composed examples)
 # packages so the real-translation E2E tests pass.
-ensure-en-es:
+ensure-en-es: build ## Install the Argos en->es / es->en packages
 	@uv run python scripts/ensure_argos_pair.py en es \
 		|| echo 'WARNING: could not install Argos en->es (offline?); real-translation E2E tests may fail'
 	@uv run python scripts/ensure_argos_pair.py es en \
 		|| echo 'WARNING: could not install Argos es->en (offline?); composed E2E tests may fail'
 
-# End-to-end SQL tests: load `vgi`, ATTACH the worker, run the .test glob.
-# CRITICAL: under haybarn-unittest, `require vgi` SKIPS — the .test files use an
-# explicit `LOAD vgi;` instead.
-test-sql: ensure-haybarn ensure-en-es
-	PATH="$(LOCAL_BIN):$$PATH" VGI_TRANSLATE_WORKER="$(VGI_TRANSLATE_WORKER)" \
-		$(HAYBARN) --keep-home --test-dir "$(TEST_DIR)" "$(TEST_PATTERN)"
-
-lint:
+lint: ## ruff + mypy
 	uv run ruff check .
 	uv run mypy vgi_translate/ || true

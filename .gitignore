@@ -15,3 +15,4 @@ duckdb_unittest_tempdir/
 
 # vgi-lint AI verdict cache
 .vgi-*-cache.json
+.tools/

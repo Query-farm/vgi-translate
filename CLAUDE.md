@@ -69,8 +69,8 @@ make test                     # both
 uv run ruff check .
 ```
 
-`make test-sql` exports `VGI_TRANSLATE_WORKER="uv run --python 3.14
-translate_worker.py"` and runs `haybarn-unittest --test-dir . "test/sql/*"`
-(install once: `uv tool install --prerelease allow 'haybarn-unittest>=2.0.0rc11,<2.1'`). **The SQL suite is
-authoritative.** CI runs unit + an `e2e-sql` job (installs runner + en→es, runs
-`make test-sql`); gateable if downloads flake, with `detect_lang` E2E always on.
+`make test-sql` runs `ci/run-integration.sh` with
+`WORKER=.venv/bin/vgi-translate-worker` over stdio, launch and http (it installs
+the pinned `haybarn-unittest` into `.tools`). **The SQL suite is
+authoritative.** CI runs unit + an `integration` transport matrix (installs runner + en→es, runs
+`ci/run-integration.sh`); gateable if downloads flake, with `detect_lang` E2E always on.
