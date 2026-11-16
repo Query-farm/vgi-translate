@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '3.15'",
@@ -467,7 +467,7 @@ name = "cuda-bindings"
 version = "13.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cuda-pathfinder" },
+    { name = "cuda-pathfinder", marker = "python_full_version < '3.15'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/89/94/e90cb85fbe77d6d9b0d3d3d60c0964a59e7fbcc5b21be64a2fda6aff9e21/cuda_bindings-13.5.0-cp313-cp313-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:cf525b2c2113fdfd2b10899a3e5d280520e970aa13c6ca021e83d9d02f895ed1", size = 7388832, upload-time = "2026-11-05T12:06:11.458Z" },
@@ -500,40 +500,40 @@ wheels = [
 
 [package.optional-dependencies]
 cublas = [
-    { name = "nvidia-cublas", marker = "platform_machine == 'aarch64' or platform_machine == 'x86_64'" },
-    { name = "nvidia-cuda-nvrtc", marker = "platform_machine == 'aarch64' or platform_machine == 'x86_64'" },
+    { name = "nvidia-cublas", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32')" },
+    { name = "nvidia-cuda-nvrtc", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32')" },
 ]
 cudart = [
-    { name = "nvidia-cuda-runtime", marker = "platform_machine == 'aarch64' or platform_machine == 'x86_64'" },
+    { name = "nvidia-cuda-runtime", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32')" },
 ]
 cufft = [
-    { name = "nvidia-cufft", marker = "platform_machine == 'aarch64' or platform_machine == 'x86_64'" },
-    { name = "nvidia-nvjitlink", marker = "platform_machine == 'aarch64' or platform_machine == 'x86_64'" },
+    { name = "nvidia-cufft", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32')" },
+    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32')" },
 ]
 cufile = [
-    { name = "nvidia-cufile", marker = "platform_machine == 'aarch64' or platform_machine == 'x86_64'" },
+    { name = "nvidia-cufile", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
 ]
 cupti = [
-    { name = "nvidia-cuda-cupti", marker = "platform_machine == 'aarch64' or platform_machine == 'x86_64'" },
+    { name = "nvidia-cuda-cupti", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32')" },
 ]
 cusolver = [
-    { name = "nvidia-cublas", marker = "platform_machine == 'aarch64' or platform_machine == 'x86_64'" },
-    { name = "nvidia-cusolver", marker = "platform_machine == 'aarch64' or platform_machine == 'x86_64'" },
-    { name = "nvidia-cusparse", marker = "platform_machine == 'aarch64' or platform_machine == 'x86_64'" },
-    { name = "nvidia-nvjitlink", marker = "platform_machine == 'aarch64' or platform_machine == 'x86_64'" },
+    { name = "nvidia-cublas", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32')" },
+    { name = "nvidia-cusolver", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32')" },
+    { name = "nvidia-cusparse", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32')" },
+    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32')" },
 ]
 cusparse = [
-    { name = "nvidia-cusparse", marker = "platform_machine == 'aarch64' or platform_machine == 'x86_64'" },
-    { name = "nvidia-nvjitlink", marker = "platform_machine == 'aarch64' or platform_machine == 'x86_64'" },
+    { name = "nvidia-cusparse", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32')" },
+    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32')" },
 ]
 nvjitlink = [
-    { name = "nvidia-nvjitlink", marker = "platform_machine == 'aarch64' or platform_machine == 'x86_64'" },
+    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32')" },
 ]
 nvrtc = [
-    { name = "nvidia-cuda-nvrtc", marker = "platform_machine == 'aarch64' or platform_machine == 'x86_64'" },
+    { name = "nvidia-cuda-nvrtc", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32')" },
 ]
 nvtx = [
-    { name = "nvidia-nvtx", marker = "platform_machine == 'aarch64' or platform_machine == 'x86_64'" },
+    { name = "nvidia-nvtx", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32')" },
 ]
 
 [[package]]
@@ -2410,7 +2410,7 @@ wheels = [
 
 [[package]]
 name = "vgi-python"
-version = "0.51.0"
+version = "0.52.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -2421,9 +2421,9 @@ dependencies = [
     { name = "typer" },
     { name = "vgi-rpc" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/69/f2/6ba118554815d7c6c3c656620f60a54f63757a8c6dc1fd36e5f08e75bd5f/vgi_python-0.51.0.tar.gz", hash = "sha256:b876ac5340da8bc1964b8e2ea73224c26ab358e95c2dbee626bfd43addd433fe", size = 5594667, upload-time = "2026-11-12T02:01:17.714Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7e/84/ada0b5d42a38ae0acbca34ca93deb82dd2800ac8610a97df9ef376035178/vgi_python-0.52.0.tar.gz", hash = "sha256:6ca3fd4a24b3b4264c25201d3a9249206a274d1820e064a5bee0b3d6e561779f", size = 5601825, upload-time = "2026-11-16T05:12:17.805Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/76/e6/4ddb80f3bdc8ba837c80caaf684727d303f1510235c04c54ba8a5d235743/vgi_python-0.51.0-py3-none-any.whl", hash = "sha256:fd1eca97152de1200463d4b4318d2c1fa7e1b8f7116ff4007e4b8ec2a549b0f5", size = 1455026, upload-time = "2026-11-12T02:01:15.393Z" },
+    { url = "https://files.pythonhosted.org/packages/8a/ff/ecea833d823c88ea1f4f458cf545ee5edc294aeb80b4e9776cb8a329c447/vgi_python-0.52.0-py3-none-any.whl", hash = "sha256:5bc11810be2da163534206a7a5bb6b1e7cb0af0195a4e6b29e5c0661ef49950e", size = 1456714, upload-time = "2026-11-16T05:12:15.548Z" },
 ]
 
 [package.optional-dependencies]
@@ -2489,9 +2489,9 @@ requires-dist = [
     { name = "pyarrow-stubs", marker = "extra == 'dev'" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6" },
-    { name = "vgi-python", specifier = ">=0.51.0" },
-    { name = "vgi-python", extras = ["http"], marker = "extra == 'http'", specifier = ">=0.51.0" },
-    { name = "vgi-python", extras = ["http"], marker = "extra == 'serve'", specifier = ">=0.51.0" },
+    { name = "vgi-python", specifier = ">=0.52.0" },
+    { name = "vgi-python", extras = ["http"], marker = "extra == 'http'", specifier = ">=0.52.0" },
+    { name = "vgi-python", extras = ["http"], marker = "extra == 'serve'", specifier = ">=0.52.0" },
 ]
 provides-extras = ["http", "serve", "dev"]
 
