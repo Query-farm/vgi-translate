@@ -3,7 +3,7 @@ name = "vgi-translate"
 version = "0.4.0"
 description = "A VGI worker bringing local neural machine translation and language detection into DuckDB/SQL"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 license = { file = "LICENSE" }
 authors = [{ name = "Query Farm" }]
 keywords = ["vgi", "duckdb", "translation", "nmt", "argos", "nlp"]
@@ -71,7 +71,7 @@ markers = [
 
 [tool.ruff]
 line-length = 120
-target-version = "py313"
+target-version = "py314"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "D"]
@@ -100,7 +100,7 @@ skip_checking_raises = true
 allow_init_docstring = true
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.14"
 strict = true
 warn_return_any = true
 warn_unused_ignores = true

@@ -12,7 +12,7 @@
 # installs the runner and the Argos en->es language package if they are missing.
 
 # The worker command DuckDB runs for the `vgi` extension's ATTACH.
-VGI_TRANSLATE_WORKER ?= uv run --python 3.13 translate_worker.py
+VGI_TRANSLATE_WORKER ?= uv run --python 3.14 translate_worker.py
 
 # haybarn-unittest is a uv tool; ~/.local/bin must be on PATH to find it.
 HAYBARN ?= haybarn-unittest

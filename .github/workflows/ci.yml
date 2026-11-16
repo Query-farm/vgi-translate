@@ -31,7 +31,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.13"]
+        python-version: ["3.14"]
 
     steps:
       - uses: actions/checkout@v6
@@ -55,7 +55,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     env:
-      UV_PYTHON: "3.13"
+      UV_PYTHON: "3.14"
     steps:
       - uses: actions/checkout@v6
 
@@ -87,18 +87,18 @@ jobs:
     name: Metadata quality (vgi-lint)
     runs-on: ubuntu-latest
     env:
-      UV_PYTHON: "3.13"
+      UV_PYTHON: "3.14"
     steps:
       - uses: actions/checkout@v6
 
       - name: Install uv
         uses: astral-sh/setup-uv@v8.2.0
 
-      - name: Set up Python 3.13
-        run: uv python install 3.13
+      - name: Set up Python 3.14
+        run: uv python install 3.14
 
       - name: Install the worker
-        run: uv sync --all-extras --python 3.13
+        run: uv sync --all-extras --python 3.14
 
       - name: vgi-lint
         uses: Query-farm/vgi-lint-check@v2
@@ -147,7 +147,7 @@ jobs:
           - { os: ubuntu-latest, asset: haybarn_unittest-linux-amd64.zip }
     runs-on: ${{ matrix.os }}
     env:
-      UV_PYTHON: "3.13"
+      UV_PYTHON: "3.14"
     defaults:
       run:
         shell: bash
@@ -157,19 +157,19 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v8.2.0
 
-      - name: Set up Python 3.13
-        run: uv python install 3.13
+      - name: Set up Python 3.14
+        run: uv python install 3.14
 
       - name: Install the worker (from the lockfile)
-        run: uv sync --frozen --python 3.13 --extra http
+        run: uv sync --frozen --python 3.14 --extra http
 
       # The real-translation E2E cases need the Argos en->es (and, for the composed
       # examples, es->en) packages in the user
       # data home. detect_lang E2E is offline and always runs.
       - name: Pre-install Argos en->es and es->en packages
         run: |
-          uv run --python 3.13 python scripts/ensure_argos_pair.py en es
-          uv run --python 3.13 python scripts/ensure_argos_pair.py es en
+          uv run --python 3.14 python scripts/ensure_argos_pair.py en es
+          uv run --python 3.14 python scripts/ensure_argos_pair.py es en
 
       - name: Download haybarn-unittest
         run: |
@@ -192,7 +192,7 @@ jobs:
           UNITTEST="$PWD/$(find hb -name 'haybarn-unittest' -type f | head -1)"
           chmod +x "$UNITTEST"
           echo "HAYBARN_UNITTEST=$UNITTEST" >> "$GITHUB_ENV"
-          echo "WORKER_CMD=uv run --python 3.13 $PWD/translate_worker.py" >> "$GITHUB_ENV"
+          echo "WORKER_CMD=uv run --python 3.14 $PWD/translate_worker.py" >> "$GITHUB_ENV"
 
       - name: Run extension integration suite (${{ matrix.transport }})
         run: ci/run-integration.sh
