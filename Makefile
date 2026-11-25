@@ -10,7 +10,7 @@
 # is self-contained: `test-sql` installs the runner and the Argos en->es / es->en
 # language packages if they are missing.
 
-HAYBARN_VERSION  ?= 2.0.0rc11
+HAYBARN_VERSION  ?= 2.0.1rc3
 WORKER           := $(CURDIR)/.venv/bin/vgi-translate-worker
 TOOLS            := $(CURDIR)/.tools
 HAYBARN_UNITTEST := $(TOOLS)/bin/haybarn-unittest

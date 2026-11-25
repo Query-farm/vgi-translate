@@ -15,7 +15,7 @@ external API calls.
 
 ```sql
 INSTALL vgi FROM community; LOAD vgi;
-ATTACH 'translate' AS tr (TYPE vgi, LOCATION 'uvx --from git+https://github.com/Query-farm/vgi-translate@v0.4.1 vgi-translate-worker');
+ATTACH 'translate' AS tr (TYPE vgi, LOCATION 'uvx --from git+https://github.com/Query-farm/vgi-translate@v0.5.0 vgi-translate-worker');
 
 SELECT tr.translate('Hello, world.', 'es');          -- 'Hola, mundo.'
 SELECT tr.detect_lang('Bonjour le monde');           -- 'fr'
@@ -27,6 +27,8 @@ The first time you translate a given language pair, the worker downloads a small
 permissively-licensed model package for that pair and **caches it** for the
 lifetime of the process and on disk. Translation then runs entirely locally.
 
+vgi-translate 0.5.0 speaks VGI protocol 3.4, so it needs Haybarn 2.0.1 or newer (Haybarn 2.0.0 loads a 3.3 `vgi` extension that cannot attach it).
+
 ## Quick start
 
 The worker isn't on PyPI; [uv](https://docs.astral.sh/uv/) runs it straight from a tagged release on GitHub. `uvx` builds an isolated environment on the first ATTACH and reuses it afterwards:
@@ -35,7 +37,7 @@ The worker isn't on PyPI; [uv](https://docs.astral.sh/uv/) runs it straight from
 INSTALL vgi FROM community;
 LOAD vgi;
 
-ATTACH 'translate' AS translate (TYPE vgi, LOCATION 'uvx --from git+https://github.com/Query-farm/vgi-translate@v0.4.1 vgi-translate-worker');
+ATTACH 'translate' AS translate (TYPE vgi, LOCATION 'uvx --from git+https://github.com/Query-farm/vgi-translate@v0.5.0 vgi-translate-worker');
 
 -- Translate an English sentence into Spanish (auto-detecting the source).
 SELECT translate.main.translate('The quick brown fox jumps over the lazy dog.', 'es');
@@ -44,7 +46,7 @@ SELECT translate.main.translate('The quick brown fox jumps over the lazy dog.', 
 SELECT translate.main.translate('Hola, mundo.', 'en', 'es');
 ```
 
-Change `@v0.4.1` to move to a newer release.
+Change `@v0.5.0` to move to a newer release.
 
 The first translation of a language pair downloads that pair's Argos model package (network needed once); after that it runs offline. See [Licensing & models](#licensing--models-read-this-first) for what is downloaded and [Backends & configuration](#backends--configuration) for the backend setting and pre-installing packages for air-gapped use. The examples further down attach the same catalog under the shorter alias `tr` (`ATTACH 'translate' AS tr ...`).
 
@@ -53,7 +55,7 @@ The first translation of a language pair downloads that pair's Argos model packa
 - **Docker** (the image bundles the worker and its dependencies):
 
   ```sql
-  ATTACH 'translate' AS translate (TYPE vgi, LOCATION 'docker://ghcr.io/query-farm/vgi-translate:0.4.1');
+  ATTACH 'translate' AS translate (TYPE vgi, LOCATION 'docker://ghcr.io/query-farm/vgi-translate:0.5.0');
   ```
 
 - **From a local checkout** (`git clone https://github.com/Query-farm/vgi-translate`), point `LOCATION` at `uv run --project /path/to/vgi-translate vgi-translate-worker`.
